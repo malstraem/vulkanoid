@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Vulkanoid.Generators": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\source\\Vulkanoid.csproj"
+    }
+  }
+}
