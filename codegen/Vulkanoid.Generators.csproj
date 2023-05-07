@@ -10,9 +10,9 @@
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-
-    <OutputPath>$(SolutionDir)build\$(AssemblyName)\$(Platform)\$(Configuration)\bin</OutputPath>
-    <IntermediateOutputPath>$(SolutionDir)build\$(AssemblyName)\$(Platform)\$(Configuration)\obj</IntermediateOutputPath>
+    
+    <OutputPath>$(SolutionDir)build\$(AssemblyName)\$(Configuration)\$(Platform)\bin</OutputPath>
+    <IntermediateOutputPath>$(SolutionDir)build\$(AssemblyName)\$(Configuration)\$(Platform)\obj</IntermediateOutputPath>
     
     <AppDesignerFolder>properties</AppDesignerFolder>
   </PropertyGroup>
