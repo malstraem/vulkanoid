@@ -1,13 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Platforms>x64</Platforms>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFrameworks>net6.0; net7.0</TargetFrameworks>
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+
+    <OutputPath>$(SolutionDir)build\$(AssemblyName)\$(Configuration)\$(Platform)\bin</OutputPath>
+    <IntermediateOutputPath>$(SolutionDir)build\$(AssemblyName)\$(Configuration)\$(Platform)\obj</IntermediateOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +27,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
 
-    <ProjectReference Include="..\source\Vulkanoid.csproj" />
+    <ProjectReference Include="$(SolutionDir)source\Vulkanoid.csproj" />
   </ItemGroup>
 </Project>

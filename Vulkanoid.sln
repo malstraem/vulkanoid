@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{76E43C1D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Generators", "codegen\Vulkanoid.Generators.csproj", "{BA07AC5B-3D29-46D9-83B0-A14C7588BEFE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Tests", "Vulkanoid.Tests\Vulkanoid.Tests.csproj", "{28B1893E-CA9F-4D66-ABE2-449FDA63A86C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Tests", "tests\Vulkanoid.Tests.csproj", "{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,18 +20,22 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{06DB6C02-D0E5-4537-A90A-F035A98B5D8E}.Debug|x64.ActiveCfg = Debug|x64
+		{06DB6C02-D0E5-4537-A90A-F035A98B5D8E}.Debug|x64.Build.0 = Debug|x64
 		{06DB6C02-D0E5-4537-A90A-F035A98B5D8E}.Release|x64.ActiveCfg = Release|x64
+		{06DB6C02-D0E5-4537-A90A-F035A98B5D8E}.Release|x64.Build.0 = Release|x64
 		{BA07AC5B-3D29-46D9-83B0-A14C7588BEFE}.Debug|x64.ActiveCfg = Debug|x64
+		{BA07AC5B-3D29-46D9-83B0-A14C7588BEFE}.Debug|x64.Build.0 = Debug|x64
 		{BA07AC5B-3D29-46D9-83B0-A14C7588BEFE}.Release|x64.ActiveCfg = Release|x64
-		{28B1893E-CA9F-4D66-ABE2-449FDA63A86C}.Debug|x64.ActiveCfg = Debug|x64
-		{28B1893E-CA9F-4D66-ABE2-449FDA63A86C}.Release|x64.ActiveCfg = Release|x64
-		{28B1893E-CA9F-4D66-ABE2-449FDA63A86C}.Release|x64.Build.0 = Release|x64
+		{BA07AC5B-3D29-46D9-83B0-A14C7588BEFE}.Release|x64.Build.0 = Release|x64
+		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Debug|x64.ActiveCfg = Debug|x64
+		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Release|x64.ActiveCfg = Release|x64
+		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{28B1893E-CA9F-4D66-ABE2-449FDA63A86C} = {76E43C1D-4637-48AE-BF21-1903DC9AF373}
+		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9} = {76E43C1D-4637-48AE-BF21-1903DC9AF373}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {69E82546-BB1D-4D20-962E-CE7DA52FD915}
