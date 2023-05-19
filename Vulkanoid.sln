@@ -13,6 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Generators", "cod
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Tests", "tests\Vulkanoid.Tests.csproj", "{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{456A214D-AA85-4302-BC6C-521AB8155BB5}"
+	ProjectSection(SolutionItems) = preProject
+		directory.build.props = directory.build.props
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Sample", "samples\Vulkanoid.Sample.csproj", "{55475EDC-A66E-4EB0-B585-81EF394F1D3E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -30,12 +37,17 @@ Global
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Debug|x64.ActiveCfg = Debug|x64
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Release|x64.ActiveCfg = Release|x64
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Release|x64.Build.0 = Release|x64
+		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Debug|x64.ActiveCfg = Debug|x64
+		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Debug|x64.Build.0 = Debug|x64
+		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Release|x64.ActiveCfg = Release|x64
+		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9} = {76E43C1D-4637-48AE-BF21-1903DC9AF373}
+		{55475EDC-A66E-4EB0-B585-81EF394F1D3E} = {BC73F324-2DD7-4A0A-997A-AEA856CC2D21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {69E82546-BB1D-4D20-962E-CE7DA52FD915}

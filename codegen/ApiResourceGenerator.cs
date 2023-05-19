@@ -42,6 +42,18 @@ public class ApiResourceGenerator : IIncrementalGenerator
 
         var @class = target.Class;
 
+        string classAccesibility = @class.DeclaredAccessibility switch
+        {
+            Accessibility.Private => "private",
+            Accessibility.Protected => "protected",
+            Accessibility.Internal => "internal",
+            Accessibility.ProtectedAndInternal => "protected internal",
+            Accessibility.Public => "public",
+            _ => string.Empty,
+        };
+
+        string handleDeviceAccesibility = @class.IsSealed ? "private" : "protected";
+
         string classDefinition = @class.Name;
 
         if (@class.IsGenericType)
@@ -64,11 +76,11 @@ public class ApiResourceGenerator : IIncrementalGenerator
 
         source += $@"namespace {@class.ContainingNamespace};
 
-public partial class {classDefinition}
+{classAccesibility} partial class {classDefinition}
 {{
-    private {handleTypeName} handle;
+    {handleDeviceAccesibility} readonly {handleTypeName} handle;
 
-    private readonly {DeviceTypeName} device;
+    {handleDeviceAccesibility} readonly {DeviceTypeName} device;
 
     public static implicit operator {handleTypeName}({classDefinition} resource) => resource.handle;";
 

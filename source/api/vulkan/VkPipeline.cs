@@ -1,6 +1,4 @@
-﻿using Silk.NET.Core.Native;
-
-namespace Vulkanoid.Vulkan;
+﻿namespace Vulkanoid.Vulkan;
 
 [Handle<Pipeline>]
 public sealed partial class VkPipeline : IDisposable

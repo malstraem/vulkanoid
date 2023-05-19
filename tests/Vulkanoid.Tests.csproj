@@ -1,16 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Platforms>x64</Platforms>
-    <TargetFrameworks>net6.0; net7.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-
-    <OutputPath>$(SolutionDir)build\$(AssemblyName)\$(Configuration)\$(Platform)\bin</OutputPath>
-    <IntermediateOutputPath>$(SolutionDir)build\$(AssemblyName)\$(Configuration)\$(Platform)\obj</IntermediateOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

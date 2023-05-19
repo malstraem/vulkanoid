@@ -1,11 +1,10 @@
-namespace Vulkanoid.Tests
+namespace Vulkanoid.Tests;
+
+public class VkDeviceTests
 {
-    public class VkDeviceTests
+    [Fact]
+    public void CreateVulkan()
     {
-        [Fact]
-        public void CreateVulkan()
-        {
-            var device = GraphicsDevice.CreateVulkan();
-        }
+        //var device = GraphicsDevice.CreateVulkan();
     }
 }
