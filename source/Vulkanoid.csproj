@@ -1,13 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Platforms>x64</Platforms>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+
+    <LangVersion>latest</LangVersion>
 
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
-    <OutputPath>$(SolutionDir)build\$(AssemblyName)\$(Platform)\$(Configuration)\bin</OutputPath>
-    <IntermediateOutputPath>$(SolutionDir)build\$(AssemblyName)\$(Platform)\$(Configuration)\obj</IntermediateOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Debug'">
@@ -27,8 +26,6 @@
     
     <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
 
-    <ProjectReference Include="$(SolutionDir)codegen\Vulkanoid.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false"/>
+    <ProjectReference Include="$(SolutionDir)codegen\Vulkanoid.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
