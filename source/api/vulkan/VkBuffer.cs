@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 using Buffer = Silk.NET.Vulkan.Buffer;
 
@@ -17,12 +17,12 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
         this.memory = memory;
     }
 
-    public void Load<T>(T[] data)
+    public void Upload<T>(Span<T> data)
     {
-        ulong size = (ulong)(Marshal.SizeOf<T>() * data.Length);
-
+#if DEBUG
+        ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
         Debug.Assert(size == memory.Size);
-
+#endif
         unsafe
         {
             void* target = (void*)memory.Map();
@@ -34,27 +34,53 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
         }
     }
 
-    public void Load<T>(T data)
+    public void Upload<T>(T[] data)
     {
-        ulong size = (ulong)Marshal.SizeOf<T>();
-
+#if DEBUG
+        ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
         Debug.Assert(size == memory.Size);
-
+#endif
         unsafe
         {
             void* target = (void*)memory.Map();
 
-            System.Buffer.MemoryCopy(&data, target, size, size);
+            fixed (T* dataPtr = data)
+                System.Buffer.MemoryCopy(dataPtr, target, size, size);
 
             memory.Unmap();
         }
     }
 
-    public void CopyTo(VkBuffer other, VkCommandPool commandPool)
+    public void UploadSingle<T>(T data)
+    {
+#if DEBUG
+        ulong size = (ulong)Unsafe.SizeOf<T>();
+        Debug.Assert(size == memory.Size);
+#endif
+        unsafe
+        {
+            void* target = (void*)memory.Map();
+
+            Unsafe.Copy(target, ref data);
+
+            memory.Unmap();
+        }
+    }
+
+    public void CopyTo(Buffer other, VkCommandPool commandPool)
     {
         using var commandBuffer = commandPool.CreateCommandBuffer();
 
-        commandBuffer.OneTimeSubmit(x => x.CopyBuffer(this, other, new BufferCopy(0ul, 0ul, size)));
+        commandBuffer.OneTimeSubmit(x => x.CopyBuffer(handle, other, new BufferCopy(0ul, 0ul, size)));
+    }
+
+    public void CopyToImage(Image image, VkCommandPool commandPool, uint width, uint height)
+    {
+        using var commandBuffer = commandPool.CreateCommandBuffer();
+
+        var region = new BufferImageCopy(0, 0, 0, new(ImageAspectFlags.ColorBit, 0, 0, 1), new(0, 0, 0), new(width, height, 1));
+
+        commandBuffer.OneTimeSubmit(x => x.CopyBufferToImage(handle, image, ImageLayout.TransferDstOptimal, region));
     }
 
     public void Dispose() => throw new NotImplementedException();

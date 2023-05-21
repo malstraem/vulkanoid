@@ -1,4 +1,9 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
 using Silk.NET.Core.Contexts;
+using Silk.NET.Core.Native;
+using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 
 namespace Vulkanoid.Vulkan;
@@ -8,6 +13,9 @@ public sealed class VkInstance
     private readonly Vk vk;
 
     private readonly KhrSurface surfaceExtension;
+    private ExtDebugUtils debugExtension;
+
+    private DebugUtilsMessengerEXT debugMessenger;
 
     internal readonly Instance handle;
 
@@ -60,45 +68,86 @@ public sealed class VkInstance
             surfaceExtension.GetPhysicalDeviceSurfaceFormats(device, surface, &formatCount, null);
 
             Span<SurfaceFormatKHR> formats = stackalloc SurfaceFormatKHR[(int)formatCount];
-
             surfaceExtension.GetPhysicalDeviceSurfaceFormats(device, surface, &formatCount, formats);
 
             surfaceExtension.GetPhysicalDeviceSurfacePresentModes(device, surface, &presentModeCount, null);
 
             Span<PresentModeKHR> presentModes = stackalloc PresentModeKHR[(int)presentModeCount];
-
             surfaceExtension.GetPhysicalDeviceSurfacePresentModes(device, surface, &presentModeCount, presentModes);
 
             return new(surfaceCapabilities, formats.ToArray(), presentModes.ToArray());
         }
     }
 
-    public VkInstance(Vk vk)
+    [Conditional("VULKAN_VALIDATION")]
+    private void DebugSetup()
+    {
+        if (!vk.TryGetInstanceExtension(handle, out debugExtension))
+            return;
+
+        var messageSeverity = DebugUtilsMessageSeverityFlagsEXT.VerboseBitExt 
+                            | DebugUtilsMessageSeverityFlagsEXT.WarningBitExt 
+                            | DebugUtilsMessageSeverityFlagsEXT.InfoBitExt 
+                            | DebugUtilsMessageSeverityFlagsEXT.ErrorBitExt;
+
+        var messageType = DebugUtilsMessageTypeFlagsEXT.GeneralBitExt 
+                        | DebugUtilsMessageTypeFlagsEXT.PerformanceBitExt 
+                        | DebugUtilsMessageTypeFlagsEXT.ValidationBitExt;
+        
+        unsafe
+        {
+            var createInfo = new DebugUtilsMessengerCreateInfoEXT(messageSeverity: messageSeverity, 
+                                                                  messageType: messageType, 
+                                                                  pfnUserCallback: (PfnDebugUtilsMessengerCallbackEXT)DebugCallback);
+
+            debugExtension.CreateDebugUtilsMessenger(handle, createInfo, null, out debugMessenger);
+        }
+    }
+
+    private static unsafe uint DebugCallback(DebugUtilsMessageSeverityFlagsEXT messageSeverity, DebugUtilsMessageTypeFlagsEXT messageTypes,
+                                             DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+    {
+        if (messageSeverity > DebugUtilsMessageSeverityFlagsEXT.InfoBitExt)
+            Console.WriteLine($"{messageSeverity} {messageTypes}" + Marshal.PtrToStringAnsi((nint)pCallbackData->PMessage) + '\n');
+
+        return 0u;
+    }
+
+    public VkInstance(Vk vk, IList<string> extensions)
     {
         this.vk = vk;
 
+        extensions.Add(ExtDebugUtils.ExtensionName);
+
+        //string?[] availableLayerNames;
+
         unsafe
         {
-            uint extensionCount;
-            vk.EnumerateInstanceExtensionProperties((byte*)null, &extensionCount, null);
+            /*uint layerCount = default;
+            vk.EnumerateInstanceLayerProperties(ref layerCount, null);
 
-            var extensionProperties = stackalloc ExtensionProperties[(int)extensionCount];
-            vk.EnumerateInstanceExtensionProperties((byte*)null, &extensionCount, extensionProperties);
+            var availableLayers = new LayerProperties[layerCount];
 
-            byte** extensionNames = stackalloc byte*[(int)extensionCount];
+            fixed (LayerProperties* availableLayersPtr = availableLayers)
+                vk.EnumerateInstanceLayerProperties(ref layerCount, availableLayersPtr);
 
-            for (int i = 0; i < extensionCount; i++)
-                extensionNames[i] = extensionProperties[i].ExtensionName;
+            availableLayerNames = availableLayers.Select(x => Marshal.PtrToStringAnsi((nint)x.LayerName)).ToArray();*/
 
             var appInfo = new ApplicationInfo(apiVersion: Vk.Version11);
-            var createInfo = new InstanceCreateInfo(pApplicationInfo: &appInfo, ppEnabledExtensionNames: extensionNames, enabledExtensionCount: extensionCount);
 
-            vk.CreateInstance(in createInfo, null, out handle);
+            var createInfo = new InstanceCreateInfo(
+                pApplicationInfo: &appInfo, 
+                ppEnabledExtensionNames: (byte**)SilkMarshal.StringArrayToPtr(extensions.ToArray()), 
+                enabledExtensionCount: (uint)extensions.Count,
+                enabledLayerCount: 1u,
+                ppEnabledLayerNames: (byte**)SilkMarshal.StringArrayToPtr(new string[] { "VK_LAYER_KHRONOS_validation" }));
 
-            vk.CurrentInstance = handle;
+            var result = vk.CreateInstance(createInfo, null, out handle);
         }
 
         IsPresentSupported = vk.TryGetInstanceExtension(handle, out surfaceExtension);
+
+        DebugSetup();
     }
 
     public static implicit operator Instance(VkInstance resource) => resource.handle;
@@ -121,7 +170,7 @@ public sealed class VkInstance
 
             foreach (var deviceHandle in deviceHandles)
             {
-                var queueFamilies = FindQueueFamilies(deviceHandle, surfaceHandle);
+                   var queueFamilies = FindQueueFamilies(deviceHandle, surfaceHandle);
 
                 SwapchainSupport swapchainSupport = default;
 

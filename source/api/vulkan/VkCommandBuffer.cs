@@ -1,4 +1,4 @@
-﻿using Silk.NET.Vulkan;
+﻿using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace Vulkanoid.Vulkan;
 
@@ -13,30 +13,31 @@ public sealed partial class VkCommandBuffer : IDisposable
     {
         action(this);
 
-        _ = Submit(new SubmitInfo());
+        unsafe { Submit(new SubmitInfo(sType: StructureType.SubmitInfo)); }
     }
       
-    public VkCommandBuffer Submit(SubmitInfo submitInfo, Fence? fence = null)
+    public void Submit(SubmitInfo? info = null, Fence? fence = null)
     {
-        device.vk.EndCommandBuffer(handle);
-
-        submitInfo.CommandBufferCount = 1;
+        var result = device.vk.EndCommandBuffer(handle);
 
         unsafe
         {
+            var submitInfo = info ?? new SubmitInfo(sType: StructureType.SubmitInfo);
+
+            submitInfo.CommandBufferCount = 1;
+
             fixed (CommandBuffer* handlePtr = &handle)
                 submitInfo.PCommandBuffers = handlePtr;
+
+            device.GraphicsQueue.Submit(submitInfo);
         }
 
-        device.GraphicsQueue.Submit(submitInfo, fence);
         device.GraphicsQueue.WaitIdle();
-
-        return this;
     }
 
-    public VkCommandBuffer BeginRenderPass(in RenderPassBeginInfo info)
+    public VkCommandBuffer BeginRenderPass(RenderPassBeginInfo info)
     {
-        device.vk.CmdBeginRenderPass(handle, in info, SubpassContents.Inline);
+        device.vk.CmdBeginRenderPass(handle, info, SubpassContents.Inline);
         return this;
     }
 
@@ -46,25 +47,25 @@ public sealed partial class VkCommandBuffer : IDisposable
         return this;
     }
 
-    public VkCommandBuffer BindPipeline(VkPipeline pipeline)
+    public VkCommandBuffer BindPipeline(Pipeline pipeline)
     {
         device.vk.CmdBindPipeline(handle, PipelineBindPoint.Graphics, pipeline);
         return this;
     }
 
-    public VkCommandBuffer BindVertexBuffer(VkBuffer vertexBuffer)
+    public VkCommandBuffer BindVertexBuffer(Buffer vertexBuffer)
     {
         device.vk.CmdBindVertexBuffers(handle, 0u, 1u, vertexBuffer, 0ul);
         return this;
     }
 
-    public VkCommandBuffer BindIndexBuffer(VkBuffer indexBuffer)
+    public VkCommandBuffer BindIndexBuffer(Buffer indexBuffer)
     {
         device.vk.CmdBindIndexBuffer(handle, indexBuffer, 0u, IndexType.Uint32);
         return this;
     }
 
-    public VkCommandBuffer BindDescriptorSet(VkDescriptorSet descriptorSet, in PipelineLayout pipelineLayout)
+    public VkCommandBuffer BindDescriptorSet(DescriptorSet descriptorSet, PipelineLayout pipelineLayout)
     {
         unsafe
         {
@@ -94,28 +95,28 @@ public sealed partial class VkCommandBuffer : IDisposable
         return this;
     }
 
-    public VkCommandBuffer CopyBuffer(VkBuffer source, VkBuffer destination, in BufferCopy copyRegion)
+    public VkCommandBuffer CopyBuffer(Buffer source, Buffer destination, in BufferCopy copyRegion)
     {
-        device.vk.CmdCopyBuffer(handle, source, destination, 1u, copyRegion);
+        device.vk.CmdCopyBuffer(handle, source, destination, 1u, in copyRegion);
         return this;
     }
 
-    public VkCommandBuffer CopyBufferToImage(VkBuffer buffer, VkImage image, ImageLayout imageLayout, in BufferImageCopy region)
+    public VkCommandBuffer CopyBufferToImage(Buffer buffer, Image image, ImageLayout imageLayout, in BufferImageCopy region)
     {
-        device.vk.CmdCopyBufferToImage(handle, buffer, image, imageLayout, 1u, region);
+        device.vk.CmdCopyBufferToImage(handle, buffer, image, imageLayout, 1u, in region);
         return this;
     }
 
-    public VkCommandBuffer PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, in ImageMemoryBarrier barrier)
+    public VkCommandBuffer PipelineBarrier(PipelineStageFlags sourceStage, PipelineStageFlags destinationStage, ImageMemoryBarrier barrier)
     {
         unsafe
         {
-            device.vk.CmdPipelineBarrier(handle, sourceStage, destinationStage, 0u, 0u, null, 0u, null, 1u, in barrier);
+            device.vk.CmdPipelineBarrier(handle, sourceStage, destinationStage, 0u, 0u, null, 0u, null, 1u, barrier);
         }
         return this;
     }
 
-    public VkCommandBuffer BlitImage(VkImage sourceImage, ImageLayout soruceLayout, VkImage destinationImage, ImageLayout destinationLayout, in ImageBlit blit, Filter filter)
+    public VkCommandBuffer BlitImage(Image sourceImage, ImageLayout soruceLayout, Image destinationImage, ImageLayout destinationLayout, ImageBlit blit, Filter filter)
     {
         device.vk.CmdBlitImage(handle, sourceImage, soruceLayout, destinationImage, destinationLayout, 1u, blit, filter);
         return this;

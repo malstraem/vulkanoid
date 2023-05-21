@@ -52,11 +52,12 @@ class VulkanRender
 
     VkDescriptorSetLayout descriptorSetLayout;
 
-    //VkDescriptorSet descriptorSet;
+    VkDescriptorSet descriptorSet;
 
     ModelViewProjection modelViewProjection;
 
-    //VkTexture textureImage;
+    VkImage textureImage;
+    VkImageView textureImageView;
     VkSampler textureSampler;
 
     VkBuffer uniformBuffer;
@@ -84,49 +85,17 @@ class VulkanRender
 
                 modelViewProjection.Model *= Matrix4X4.CreateRotationZ(0.05f * sign);
 
-                uniformBuffer.Load(modelViewProjection);
+                uniformBuffer.UploadSingle(modelViewProjection);
             }
         };
 
-        mouse.Scroll += (s, e) =>
-        {
-            int sign = e.Y > 0 ? -1 : 1;
-
-            //modelViewProjection.View = modelViewProjection.Model.(0.99f * sign);
-
-            uniformBuffer.Load(modelViewProjection);
-        };
-
-        unsafe
-        {
-            uint extensionCount;
-            vk.EnumerateInstanceExtensionProperties((byte*)null, &extensionCount, null);
-
-            var extensionProperties = stackalloc ExtensionProperties[(int)extensionCount];
-            vk.EnumerateInstanceExtensionProperties((byte*)null, &extensionCount, extensionProperties);
-
-            byte** extensionNames = stackalloc byte*[(int)extensionCount];
-
-            for (int i = 0; i < extensionCount; i++)
-                extensionNames[i] = extensionProperties[i].ExtensionName;
-
-            var appInfo = new ApplicationInfo(apiVersion: Vk.Version11);
-            var createInfo = new InstanceCreateInfo(pApplicationInfo: &appInfo, ppEnabledExtensionNames: extensionNames, enabledExtensionCount: extensionCount);
-
-            vk.CreateInstance(in createInfo, null, out var instanceHandle);
-
-            //vk.CurrentInstance = instanceHandle;
-
-            //surface = window.VkSurface!.Create<AllocationCallbacks>(instanceHandle.ToHandle(), null).ToSurface();
-
-            device = GraphicsDevice.CreateVulkan(window.VkSurface!);
-        }
+        device = GraphicsDevice.CreateVulkan(window.VkSurface!);
 
         commandPool = device.CreateCommandPool();
 
         descriptorSetLayout = device.CreateDescriptorSetLayout();
 
-        var extent = new Extent2D((uint)window.Size.X, (uint)window.Size.Y);
+        var extent = new Extent2D((uint)window.FramebufferSize.X, (uint)window.FramebufferSize.Y);
 
         var surfaceFormat = device.SwapchainSupport.Formats.FirstOrDefault(f => f.Format == Format.B8G8R8A8Srgb, device.SwapchainSupport.Formats[0]).Format;
 
@@ -151,7 +120,7 @@ class VulkanRender
             renderFinishedSemaphore = device.CreateSemaphore(semaphoreInfo);
         }
 
-        var model = SharpGLTF.Schema2.ModelRoot.Load("assets/grogu/scene.gltf");
+        var model = SharpGLTF.Schema2.ModelRoot.Load("assets/helmet/scene.gltf");
         foreach (var mesh in model.LogicalMeshes)
         {
             foreach (var primitive in mesh.Primitives)
@@ -179,22 +148,22 @@ class VulkanRender
         }
 
         uniformBuffer = device.CreateBuffer<ModelViewProjection>(BufferUsageFlags.UniformBufferBit);
-        uniformBuffer.Load(modelViewProjection);
 
         vertexBuffer = device.CreateBuffer<Vertex>(BufferUsageFlags.VertexBufferBit, vertices.Count);
-        vertexBuffer.Load(vertices.ToArray());
+        vertexBuffer.Upload(vertices.ToArray());
 
         indexBuffer = device.CreateBuffer<uint>(BufferUsageFlags.IndexBufferBit, indices.Count);
-        indexBuffer.Load(indices.ToArray());
+        indexBuffer.Upload(indices.ToArray());
 
         var modelImage = model.LogicalTextures[1].PrimaryImage.Content;
 
-        //textureImage = device, commandPool, modelImage.Open());
-        //textureSampler = new(device, textureImage.MipLevels);
+        textureImage = device.CreateImage(modelImage.Open(), commandPool);
+        textureImageView = device.CreateImageView(textureImage);
+        textureSampler = device.CreateSampler(textureImage.MipLevels);
 
         descriptorPool = device.CreateDescriptorPool();
 
-        //descriptorSet = descriptorPool.CreateDescriptorSet(descriptorSetLayout, uniformBuffer, textureImage, textureSampler);
+        descriptorSet = descriptorPool.CreateDescriptorSet<ModelViewProjection>(descriptorSetLayout, uniformBuffer, textureImageView, textureSampler);
 
         modelViewProjection = new ModelViewProjection()
         {
@@ -205,8 +174,10 @@ class VulkanRender
 
         device.WaitIdle();
 
+        uniformBuffer.UploadSingle(modelViewProjection);
+
         window.FramebufferResize += OnFramebufferResize;
-        window.Render += DrawFrame;
+        window.Render += OnRender;
 
         stopwatch.Start();
     }
@@ -231,7 +202,7 @@ class VulkanRender
 
     void Dispose()
     {
-        window.Render -= DrawFrame;
+        window.Render -= OnRender;
 
         descriptorSetLayout.Dispose();
 
@@ -248,56 +219,49 @@ class VulkanRender
         commandPool.Dispose();
     }
 
-    void DrawFrame(double obj)
+    void OnRender(double obj)
     {
-        imageFence.Wait(ulong.MaxValue);
-        imageFence.Reset();
+        var result = swapchain.AcquireNextImage(imageAvailableSemaphore, out uint imageIndex);
+
+        if (result == Result.ErrorOutOfDateKhr)
+        {
+            RecreateSwapchain();
+            return;
+        }
+
+        if (result is not Result.Success and not Result.SuboptimalKhr)
+            throw new Exception("failed to acquire swapchain image");
+
+        using var commandBuffer = commandPool.CreateCommandBuffer();
 
         unsafe
         {
-            var result = swapchain.AcquireNextImage(imageAvailableSemaphore, out uint imageIndex);
-
-            if (result == Result.ErrorOutOfDateKhr)
+            var clearValues = stackalloc ClearValue[2]
             {
-                RecreateSwapchain();
-                return;
-            }
+                new(color: new() { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 }),
+                new(depthStencil: new(1, 0))
+            };
 
-            if (result is not Result.Success and not Result.SuboptimalKhr)
-                throw new Exception("failed to acquire swapchain image");
+            var renderPassInfo = new RenderPassBeginInfo(
+                renderPass: renderPass,
+                framebuffer: swapchain.Framebuffers[imageIndex],
+                renderArea: new Rect2D { Offset = new() { X = 0, Y = 0 }, Extent = swapchain.Extent },
+                clearValueCount: 2,
+                pClearValues: clearValues);
 
-            using var commandBuffer = commandPool.CreateCommandBuffer();
-
-            unsafe
-            {
-                var clearValues = stackalloc ClearValue[2]
-                {
-                    new(color: new() { Float32_0 = 0, Float32_1 = 0, Float32_2 = 0, Float32_3 = 1 }),
-                    new(depthStencil: new(1, 0))
-                };
-
-                var renderPassInfo = new RenderPassBeginInfo(
-                    renderPass: renderPass,
-                    framebuffer: swapchain.Framebuffers[imageIndex],
-                    renderArea: new Rect2D { Offset = new() { X = 0, Y = 0 }, Extent = swapchain.Extent },
-                    clearValueCount: 2,
-                    pClearValues: clearValues);
-
-                commandBuffer.BeginRenderPass(renderPassInfo)
-                             .BindPipeline(pipeline)
-                             .BindVertexBuffer(vertexBuffer)
-                             .BindIndexBuffer(indexBuffer)
-                             //.BindDescriptorSet(descriptorSet, pipeline.Layout)
-                             //.PushConstant(modelViewProjection.Model, pipeline.Layout, ShaderStageFlags.VertexBit)
-                             .DrawIndexed((uint)indices.Count)
-                             //.Draw((uint)vertices.Count)
-                             .EndRenderPass();
-            }
+            commandBuffer.BeginRenderPass(renderPassInfo)
+                         .BindPipeline(pipeline)
+                         .BindVertexBuffer(vertexBuffer)
+                         .BindIndexBuffer(indexBuffer)
+                         .BindDescriptorSet(descriptorSet, pipeline.Layout)
+                         //.PushConstant(modelViewProjection.Model, pipeline.Layout, ShaderStageFlags.VertexBit)
+                         .DrawIndexed((uint)indices.Count)
+                         .EndRenderPass();
 
             var waitStage = PipelineStageFlags.ColorAttachmentOutputBit;
 
-            var imageAvailableSemaphoreHandle = (Semaphore)imageAvailableSemaphore;
-            var renderFinishedSemaphoreHandle = (Semaphore)renderFinishedSemaphore;
+            Semaphore imageAvailableSemaphoreHandle = imageAvailableSemaphore;
+            Semaphore renderFinishedSemaphoreHandle = renderFinishedSemaphore;
 
             var submitInfo = new SubmitInfo(
                 pWaitSemaphores: &imageAvailableSemaphoreHandle,
@@ -307,13 +271,13 @@ class VulkanRender
                 pWaitDstStageMask: &waitStage);
 
             commandBuffer.Submit(submitInfo, imageFence);
-
-            result = swapchain.Present(renderFinishedSemaphore, imageIndex);
-
-            if (result is Result.ErrorOutOfDateKhr or Result.SuboptimalKhr)
-                RecreateSwapchain();
-            else if (result != Result.Success)
-                throw new Exception("failed to present swapchain image");
         }
+
+        result = swapchain.Present(renderFinishedSemaphore, imageIndex);
+
+        if (result is Result.ErrorOutOfDateKhr or Result.SuboptimalKhr)
+            RecreateSwapchain();
+        else if (result != Result.Success)
+            throw new Exception("failed to present swapchain image");
     }
 }

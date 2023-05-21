@@ -5,7 +5,7 @@ public sealed partial class VkMemory
 {
     public required ulong Size { get; init; }
 
-    public unsafe nint Map() => device.MapMemory(handle, Size);
+    public nint Map() => device.MapMemory(handle, Size);
 
     public void Unmap() => device.UnmapMemory(handle);
 }

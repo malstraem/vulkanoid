@@ -1,7 +1,5 @@
+using Silk.NET.Core.Native;
 using Silk.NET.Vulkan.Extensions.KHR;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Vulkanoid.Vulkan;
 
@@ -18,6 +16,7 @@ public sealed class VkPhysicalDevice
     internal readonly QueueFamilies queueFamilies;
 
     internal readonly SwapchainSupport swapchainSupport;
+
 
     private Format FindSupportedFormat(Format[] candidates, ImageTiling tiling, FormatFeatureFlags features)
     {
@@ -67,20 +66,6 @@ public sealed class VkPhysicalDevice
 
         unsafe
         {
-            uint extensionCount;
-            vk.EnumerateDeviceExtensionProperties(handle, (byte*)null, &extensionCount, null);
-
-            var extensionProperties = stackalloc ExtensionProperties[(int)extensionCount];
-            vk.EnumerateDeviceExtensionProperties(handle, (byte*)null, &extensionCount, extensionProperties);
-
-            byte** extensionNames = stackalloc byte*[(int)extensionCount];
-
-            for (int i = 0; i < extensionCount; i++)
-            {
-                extensionNames[i] = extensionProperties[i].ExtensionName;
-                Console.WriteLine("\t" + Marshal.PtrToStringAnsi((IntPtr)extensionProperties[i].ExtensionName));
-            }
-
             if (queueFamilies.PresentIndex is not null)
             {
                 queueCreateInfos = stackalloc DeviceQueueCreateInfo[2];
@@ -102,17 +87,16 @@ public sealed class VkPhysicalDevice
 
             var deviceFeatures = new PhysicalDeviceFeatures();
 
-            var name = Encoding.ASCII.GetBytes(KhrSwapchain.ExtensionName);
+            string[] extensions = { KhrSwapchain.ExtensionName };
 
-            fixed (byte* namePtr = name)
             fixed (DeviceQueueCreateInfo* queueCreateInfoPtr = queueCreateInfos)
             {
                 var createInfo = new DeviceCreateInfo(
                     pQueueCreateInfos: queueCreateInfoPtr,
                     queueCreateInfoCount: uniqueQueueCount,
                     pEnabledFeatures: &deviceFeatures,
-                    ppEnabledExtensionNames: &namePtr,
-                    enabledExtensionCount: 1);
+                    ppEnabledExtensionNames: (byte**)SilkMarshal.StringArrayToPtr(extensions),
+                    enabledExtensionCount: (uint)extensions.Length);
 
                 var result = vk.CreateDevice(handle, createInfo, null, out var deviceHandle);
 

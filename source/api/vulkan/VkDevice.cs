@@ -3,8 +3,10 @@ using System.Runtime.CompilerServices;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Core.Native;
 using Silk.NET.Vulkan.Extensions.KHR;
-
 using Buffer = Silk.NET.Vulkan.Buffer;
+
+using SixLabors.ImageSharp.PixelFormats;
+using RawImage = SixLabors.ImageSharp.Image;
 
 namespace Vulkanoid.Vulkan;
 
@@ -24,7 +26,14 @@ public sealed class VkDevice : GraphicsDevice
 
     public VkDevice(IVkSurface surface)
     {
-        instance = new VkInstance(vk);
+        unsafe
+        {
+            byte** extensions = surface.GetRequiredExtensions(out uint count);
+
+            string[] extensionNames = SilkMarshal.PtrToStringArray((nint)extensions, (int)count);
+
+            instance = new VkInstance(vk, extensionNames.ToList());
+        }
 
         physicalDevice = instance.GetPhysicalDevices(surface).First(); // todo: allow to list and pick devices
 
@@ -69,9 +78,15 @@ public sealed class VkDevice : GraphicsDevice
 
     public void WaitIdle() => vk.DeviceWaitIdle(handle);
 
-    internal void WaitForFence(in Fence fence, ulong timeout) => vk.WaitForFences(handle, 1u, fence, true, timeout);
+    internal void WaitForFence(in Fence fence, ulong timeout)
+    {
+        var result = vk.WaitForFences(handle, 1u, fence, true, timeout);
+    }
 
-    internal void ResetFence(in Fence fence) => vk.ResetFences(handle, 1u, fence);
+    internal void ResetFence(in Fence fence)
+    {
+        var result = vk.ResetFences(handle, 1u, fence);
+    }
     #endregion Synchronization
 
     #region Allocating
@@ -176,6 +191,8 @@ public sealed class VkDevice : GraphicsDevice
     {
         var result = vk.BindBufferMemory(handle, bufferHandle, memoryHandle, 0);
     }
+
+    internal void BindImageMemory(Image imageHandle, DeviceMemory memoryHandle) => vk.BindImageMemory(handle, imageHandle, memoryHandle, 0u);
 
     internal void FreeMemory(DeviceMemory memoryHandle)
     {
@@ -321,17 +338,17 @@ public sealed class VkDevice : GraphicsDevice
                 dependencyCount: 1,
                 pDependencies: &dependency);
 
-            vk.CreateRenderPass(handle, in renderPassInfo, null, out var renderPassHandle);
+            vk.CreateRenderPass(handle, renderPassInfo, null, out var renderPassHandle);
 
             return new VkRenderPass(renderPassHandle, this);
         }
     }
     #endregion
 
-    #region Image, ImageView, Sampler, Framebuffer
+    #region Image
     [Obsolete("To do - add flexibility")]
-    public VkImage CreateImage(Extent3D extent, uint mipLevels, Format format, ImageTiling imageTiling, ImageUsageFlags imageUsage,
-        MemoryPropertyFlags memoryProperty, SampleCountFlags sampleCount = SampleCountFlags.Count1Bit)
+    public VkImage CreateImage(Extent3D extent, Format format, ImageTiling imageTiling, ImageUsageFlags imageUsage,
+        MemoryPropertyFlags properties, SampleCountFlags sampleCount = SampleCountFlags.Count1Bit, uint mipLevels = 1)
     {
         unsafe
         {
@@ -351,20 +368,42 @@ public sealed class VkDevice : GraphicsDevice
 
             vk.GetImageMemoryRequirements(handle, imageHandle, out var memoryRequirements);
 
-            var allocateInfo = new MemoryAllocateInfo(
-                allocationSize: memoryRequirements.Size,
-                memoryTypeIndex: physicalDevice.FindMemoryType(memoryRequirements.MemoryTypeBits, MemoryPropertyFlags.DeviceLocalBit));
-
-            vk.AllocateMemory(handle, in allocateInfo, null, out var memoryHandle);
-
-            vk.BindImageMemory(handle, imageHandle, memoryHandle, 0u);
-
-            return new VkImage(imageHandle, this);
+            return new VkImage(imageHandle, AllocateMemory(memoryRequirements, properties), this) { Format = format, MipLevels = mipLevels };
         }
     }
 
+    public VkImage CreateImage(Stream stream, VkCommandPool commandPool)
+    {
+        using var rawImage = RawImage.Load<Rgba32>(stream);
+        uint mipLevels = (uint)(Math.Floor(Math.Log2(Math.Max(rawImage.Width, rawImage.Height))) + 1);
+        int width = rawImage.Width;
+        int height = rawImage.Height;
+        int imageSize = width * height * 4;
+
+        Span<Rgba32> pixelData = new(new Rgba32[width * height]);
+        rawImage.CopyPixelDataTo(pixelData);
+
+        var stagingBuffer = CreateBuffer<Rgba32>(BufferUsageFlags.BufferUsageTransferSrcBit, pixelData.Length);
+        stagingBuffer.Upload(pixelData);
+
+        var image = CreateImage(new Extent3D((uint)width, (uint)height, 1u), Format.R8G8B8A8Srgb, ImageTiling.Optimal,
+            ImageUsageFlags.ImageUsageTransferDstBit | ImageUsageFlags.ImageUsageTransferSrcBit | ImageUsageFlags.ImageUsageSampledBit,
+            MemoryPropertyFlags.MemoryPropertyDeviceLocalBit, mipLevels: mipLevels);
+
+        image.TransitionImageLayout(commandPool, Format.R8G8B8A8Srgb, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, mipLevels);
+
+        stagingBuffer.CopyToImage(image, commandPool, (uint)width, (uint)height);
+
+        image.TransitionImageLayout(commandPool, Format.R8G8B8A8Srgb, ImageLayout.TransferDstOptimal, ImageLayout.ShaderReadOnlyOptimal, mipLevels);
+        image.GenerateMipMaps(width, height, mipLevels, Format.R8G8B8A8Srgb, commandPool);
+
+        return image;
+    }
+    #endregion
+
+    #region ImageView
     [Obsolete("To do - add flexibility")]
-    public VkImageView CreateImageView(VkImage image, Format format, uint mipLevels, ImageAspectFlags aspectFlags = ImageAspectFlags.ColorBit)
+    public VkImageView CreateImageView(Image image, Format format, uint mipLevels, ImageAspectFlags aspectFlags = ImageAspectFlags.ColorBit)
     {
         unsafe
         {
@@ -372,7 +411,10 @@ public sealed class VkDevice : GraphicsDevice
                 image: image,
                 viewType: ImageViewType.Type2D,
                 format: format,
-                components: new ComponentMapping(ComponentSwizzle.Identity, ComponentSwizzle.Identity, ComponentSwizzle.Identity, ComponentSwizzle.Identity),
+                components: new ComponentMapping(ComponentSwizzle.Identity, 
+                                                ComponentSwizzle.Identity, 
+                                                ComponentSwizzle.Identity, 
+                                                ComponentSwizzle.Identity),
                 subresourceRange: new ImageSubresourceRange
                 {
                     AspectMask = aspectFlags,
@@ -382,12 +424,17 @@ public sealed class VkDevice : GraphicsDevice
                     LayerCount = 1
                 });
 
-            vk.CreateImageView(handle, in createInfo, null, out var imageViewHandle);
+            vk.CreateImageView(handle, createInfo, null, out var imageViewHandle);
 
             return new VkImageView(imageViewHandle, this);
         }
     }
 
+    public VkImageView CreateImageView(VkImage image, ImageAspectFlags aspectFlags = ImageAspectFlags.ColorBit) 
+        => CreateImageView(image, image.Format, image.MipLevels, aspectFlags);
+    #endregion
+
+    #region Sampler & Framebuffer
     [Obsolete("To do - add flexibility")]
     public VkSampler CreateSampler(uint maxLod)
     {
@@ -438,7 +485,7 @@ public sealed class VkDevice : GraphicsDevice
                 height: extent.Height,
                 layers: 1u);
 
-            vk.CreateFramebuffer(handle, framebufferInfo, null, out var framebufferHandle);
+            var result = vk.CreateFramebuffer(handle, framebufferInfo, null, out var framebufferHandle);
 
             return new VkFramebuffer(framebufferHandle, this);
         }
@@ -561,9 +608,9 @@ public sealed class VkDevice : GraphicsDevice
                     basePipelineHandle: default,
                     pDepthStencilState: &depthStencil);
 
-                vk.CreateGraphicsPipelines(handle, default, 1u, pipelineInfo, null, out var pipelineHandle);
+                var result = vk.CreateGraphicsPipelines(handle, default, 1u, pipelineInfo, null, out var pipelineHandle);
 
-                return new VkPipeline(pipelineHandle, this);
+                return new VkPipeline(pipelineHandle, layoutHandle, this);
             }
         }
     }
@@ -597,6 +644,7 @@ public sealed class VkDevice : GraphicsDevice
     #endregion
 
     #region Swapchain
+    [Obsolete("To do - add flexibility")]
     public VkSwapchain CreateSwapchain(VkCommandPool commandPool, VkRenderPass renderPass, Extent2D extent,
                                        Format format, SampleCountFlags sampleCount)
     {
@@ -622,16 +670,6 @@ public sealed class VkDevice : GraphicsDevice
         if (swapchainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapchainSupport.Capabilities.MaxImageCount)
             imageCount = swapchainSupport.Capabilities.MaxImageCount;
 
-        var depthImage = CreateImage(new Extent3D(extent.Width, extent.Height, 1u), 
-            1u, format, ImageTiling.Optimal, ImageUsageFlags.DepthStencilAttachmentBit, MemoryPropertyFlags.DeviceLocalBit, sampleCount);
-
-        var depthView = CreateImageView(depthImage, format, 1u, ImageAspectFlags.DepthBit);
-
-        var sampleImage = CreateImage(new Extent3D(extent.Width, extent.Height, 1u), 
-            1, format, ImageTiling.Optimal, ImageUsageFlags.TransientAttachmentBit | ImageUsageFlags.ColorAttachmentBit, MemoryPropertyFlags.DeviceLocalBit, sampleCount);
-
-        var sampleView = CreateImageView(sampleImage, format, 1, ImageAspectFlags.ColorBit);
-
         unsafe
         {
             var createInfo = new SwapchainCreateInfoKHR(
@@ -650,8 +688,6 @@ public sealed class VkDevice : GraphicsDevice
 
             var families = physicalDevice.queueFamilies;
 
-            uint[] queueFamilyIndices = { families.GraphicsIndex, families.PresentIndex!.Value };
-
             if (families.GraphicsIndex != families.PresentIndex)
             {
                 uint* indices = stackalloc [] { families.GraphicsIndex, families.PresentIndex!.Value };
@@ -668,7 +704,20 @@ public sealed class VkDevice : GraphicsDevice
             if (!vk.TryGetDeviceExtension(instance, handle, out KhrSwapchain swapchainExtension))
                 throw new Exception("Presenting requested but not supported");
 
-            swapchainExtension.CreateSwapchain(handle, in createInfo, null, out var swapchainHandle);
+            var result = swapchainExtension.CreateSwapchain(handle, createInfo, null, out var swapchainHandle);
+
+            var depthImage = CreateImage(new Extent3D(extent.Width, extent.Height, 1u), physicalDevice.DepthFormat, ImageTiling.Optimal,
+                                ImageUsageFlags.DepthStencilAttachmentBit, MemoryPropertyFlags.DeviceLocalBit, sampleCount);
+
+            //depthImage.TransitionImageLayout(commandPool, format, ImageLayout.Undefined, ImageLayout.DepthStencilAttachmentOptimal, 1u);
+
+            var depthView = CreateImageView(depthImage, ImageAspectFlags.DepthBit);
+
+            var sampleImage = CreateImage(new Extent3D(extent.Width, extent.Height, 1u), format, ImageTiling.Optimal,
+                                            ImageUsageFlags.TransientAttachmentBit | ImageUsageFlags.ColorAttachmentBit, MemoryPropertyFlags.DeviceLocalBit, sampleCount);
+
+            var sampleView = CreateImageView(sampleImage, ImageAspectFlags.ColorBit);
+
             swapchainExtension.GetSwapchainImages(handle, swapchainHandle, ref imageCount, null);
 
             var images = new Span<Image>(new Image[imageCount]);
@@ -678,7 +727,7 @@ public sealed class VkDevice : GraphicsDevice
 
             for (int i = 0; i < images.Length; i++)
             {
-                var imageView = CreateImageView(new VkImage(images[i], this), format, 1u);
+                var imageView = CreateImageView(images[i], format, 1u);
 
                 framebuffers[i] = CreateFramebuffer(imageView, depthView, sampleView, renderPass, extent);
             }

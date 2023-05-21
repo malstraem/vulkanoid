@@ -54,6 +54,8 @@ public class ApiResourceGenerator : IIncrementalGenerator
 
         string handleDeviceAccesibility = @class.IsSealed ? "private" : "protected";
 
+        string constructorAccesibility = @class.Constructors[0].IsImplicitlyDeclared ? "public" : "private";
+
         string classDefinition = @class.Name;
 
         if (@class.IsGenericType)
@@ -90,7 +92,7 @@ public class ApiResourceGenerator : IIncrementalGenerator
             {
                 source += $@"
 
-    public {@class.Name}({handleTypeName} handle, {DeviceTypeName} device";
+    {constructorAccesibility} {@class.Name}({handleTypeName} handle, {DeviceTypeName} device";
 
                 foreach (var parameter in baseConstructor.Parameters)
                 {

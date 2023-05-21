@@ -24,13 +24,13 @@ public sealed partial class VkSwapchain : IDisposable
     {
         unsafe
         {
-            fixed (SwapchainKHR* pSwapchain = &handle)
+            fixed (SwapchainKHR* handlePtr = &handle)
             {
                 var presentInfo = new PresentInfoKHR(
                     waitSemaphoreCount: 1u,
                     pWaitSemaphores: &signalSemaphore,
                     swapchainCount: 1u,
-                    pSwapchains: pSwapchain,
+                    pSwapchains: handlePtr,
                     pImageIndices: &imageIndex);
 
                 return swapchainExt.QueuePresent(presentQueue, &presentInfo);
