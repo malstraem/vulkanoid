@@ -12,9 +12,10 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
 
     public VkBuffer(Buffer handle, VkMemory memory, VkDevice device) : this(handle, device)
     {
-        device.BindBufferMemory(handle, memory);
-
+        size = memory.Size;
         this.memory = memory;
+
+        device.BindBufferMemory(handle, memory);
     }
 
     public void Upload<T>(Span<T> data)
@@ -53,16 +54,14 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
 
     public void UploadSingle<T>(T data)
     {
-#if DEBUG
+//#if DEBUG
         ulong size = (ulong)Unsafe.SizeOf<T>();
         Debug.Assert(size == memory.Size);
-#endif
+//#endif
         unsafe
         {
             void* target = (void*)memory.Map();
-
             Unsafe.Copy(target, ref data);
-
             memory.Unmap();
         }
     }

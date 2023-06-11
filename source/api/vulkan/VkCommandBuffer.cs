@@ -13,9 +13,12 @@ public sealed partial class VkCommandBuffer : IDisposable
     {
         action(this);
 
-        unsafe { Submit(new SubmitInfo(sType: StructureType.SubmitInfo)); }
+        unsafe
+        {
+            Submit(new SubmitInfo(sType: StructureType.SubmitInfo));
+        }
     }
-      
+
     public void Submit(SubmitInfo? info = null, Fence? fence = null)
     {
         var result = device.vk.EndCommandBuffer(handle);
@@ -29,10 +32,10 @@ public sealed partial class VkCommandBuffer : IDisposable
             fixed (CommandBuffer* handlePtr = &handle)
                 submitInfo.PCommandBuffers = handlePtr;
 
-            device.GraphicsQueue.Submit(submitInfo);
+            device.graphicsQueue.Submit(submitInfo);
         }
 
-        device.GraphicsQueue.WaitIdle();
+        device.graphicsQueue.WaitIdle();
     }
 
     public VkCommandBuffer BeginRenderPass(RenderPassBeginInfo info)

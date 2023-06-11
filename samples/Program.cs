@@ -1,17 +1,18 @@
 ﻿using System.Diagnostics;
 
+using Silk.NET.Core.Native;
 using Silk.NET.Maths;
 
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-using Silk.NET.Input;
 using Silk.NET.Windowing;
 
 using Vulkanoid;
 using Vulkanoid.Vulkan;
 using Vulkanoid.Sample;
+using SharpGLTF.Transforms;
 
 var options = WindowOptions.DefaultVulkan;
 options.Size = new(1280, 720);
@@ -25,17 +26,17 @@ window.Run();
 
 class VulkanRender
 {
-    private readonly IWindow window;
+    readonly IWindow window;
 
-    private readonly Stopwatch stopwatch = new();
+    readonly Stopwatch stopwatch = new();
 
-    private readonly Vk vk = Vk.GetApi();
+    readonly Vk vk = Vk.GetApi();
 
     VkDevice device;
 
     KhrSurface khrSurface;
-    
-    SurfaceKHR surface;
+
+    //SurfaceKHR surface;
 
     VkRenderPass renderPass;
 
@@ -49,9 +50,7 @@ class VulkanRender
     Shader fragmentShader;
 
     VkDescriptorPool descriptorPool;
-
     VkDescriptorSetLayout descriptorSetLayout;
-
     VkDescriptorSet descriptorSet;
 
     ModelViewProjection modelViewProjection;
@@ -74,22 +73,14 @@ class VulkanRender
     public VulkanRender(IWindow window)
     {
         this.window = window;
-        var input = window.CreateInput();
-        var mouse = input.Mice[0];
 
-        mouse.MouseMove += (s, e) =>
+        unsafe
         {
-            if (s.IsButtonPressed(MouseButton.Left))
-            {
-                int sign = e.X > 0 ? -1 : 1;
+            byte** extensions = window.VkSurface!.GetRequiredExtensions(out uint count);
+            string[] extensionNames = SilkMarshal.PtrToStringArray((nint)extensions, (int)count);
 
-                modelViewProjection.Model *= Matrix4X4.CreateRotationZ(0.05f * sign);
-
-                uniformBuffer.UploadSingle(modelViewProjection);
-            }
-        };
-
-        device = GraphicsDevice.CreateVulkan(window.VkSurface!);
+            device = GraphicsDevice.CreateVulkan(vk, extensionNames);
+        }
 
         commandPool = device.CreateCommandPool();
 
@@ -97,15 +88,21 @@ class VulkanRender
 
         var extent = new Extent2D((uint)window.FramebufferSize.X, (uint)window.FramebufferSize.Y);
 
-        var surfaceFormat = device.SwapchainSupport.Formats.FirstOrDefault(f => f.Format == Format.B8G8R8A8Srgb, device.SwapchainSupport.Formats[0]).Format;
+        unsafe
+        {
+            var surfaceHandle = window.VkSurface.Create<AllocationCallbacks>(vk.CurrentInstance!.Value.ToHandle(), null).ToSurface();
+            var swapchainSupport = device.GetSwapchainSupport(surfaceHandle);
 
-        renderPass = device.CreateRenderPass(surfaceFormat, SampleCountFlags.Count8Bit);
-        swapchain = device.CreateSwapchain(commandPool, renderPass, extent, surfaceFormat, SampleCountFlags.Count8Bit);
+            var surfaceFormat = swapchainSupport.Formats.FirstOrDefault(f => f.Format == Format.B8G8R8A8Srgb, swapchainSupport.Formats[0]).Format;
 
-        var vertCode = Embedded.GetShaderBytes("shader.vert.spv");
+            renderPass = device.CreateRenderPass(surfaceFormat, SampleCountFlags.Count8Bit);
+            swapchain = device.CreateSwapchain(surfaceHandle, extent, surfaceFormat, SampleCountFlags.Count8Bit, renderPass);
+        }
+
+        byte[] vertCode = Embedded.GetShaderBytes("shader.vert.spv");
         vertexShader = device.CreateShader(vertCode, "main", ShaderStageFlags.VertexBit);
 
-        var fragCode = Embedded.GetShaderBytes("shader.frag.spv");
+        byte[] fragCode = Embedded.GetShaderBytes("shader.frag.spv");
         fragmentShader = device.CreateShader(fragCode, "main", ShaderStageFlags.FragmentBit);
 
         pipeline = device.CreatePipeline(new Shader[] { vertexShader, fragmentShader }, descriptorSetLayout, renderPass, extent);
@@ -193,9 +190,15 @@ class VulkanRender
 
         var extent = new Extent2D((uint)window.Size.X, (uint)window.Size.Y);
 
-        var surfaceFormat = device.SwapchainSupport.Formats.FirstOrDefault(f => f.Format == Format.B8G8R8A8Srgb, device.SwapchainSupport.Formats[0]).Format;
+        unsafe
+        {
+            var surfaceHandle = window.VkSurface.Create<AllocationCallbacks>(vk.CurrentInstance!.Value.ToHandle(), null).ToSurface();
+            var swapchainSupport = device.GetSwapchainSupport(surfaceHandle);
 
-        swapchain = device.CreateSwapchain(commandPool, renderPass, extent, surfaceFormat, SampleCountFlags.Count8Bit);
+            var surfaceFormat = swapchainSupport.Formats.FirstOrDefault(f => f.Format == Format.B8G8R8A8Srgb, swapchainSupport.Formats[0]).Format;
+
+            swapchain = device.CreateSwapchain(surfaceHandle, extent, surfaceFormat, SampleCountFlags.Count8Bit, renderPass);
+        }
 
         pipeline = device.CreatePipeline(new Shader[] { vertexShader, fragmentShader }, descriptorSetLayout, renderPass, extent);
     }
@@ -204,23 +207,26 @@ class VulkanRender
     {
         window.Render -= OnRender;
 
-        descriptorSetLayout.Dispose();
+        /*descriptorSetLayout.Dispose();
 
         uniformBuffer.Dispose();
 
-        //textureImage.Dispose();
         textureSampler.Dispose();
 
-        //descriptorSet.Dispose();
+        descriptorSet.Dispose();
 
         swapchain.Dispose();
         indexBuffer.Dispose();
         vertexBuffer.Dispose();
-        commandPool.Dispose();
+        commandPool.Dispose();*/
     }
 
-    void OnRender(double obj)
+    void OnRender(double time)
     {
+        modelViewProjection.Model *= Matrix4X4.CreateRotationZ((float)time);
+        modelViewProjection.Projection = Matrix4X4.CreatePerspectiveFieldOfView(Scalar.DegreesToRadians(45f), swapchain.Extent.Width / (float)swapchain.Extent.Height, 0.001f, 10000f);
+        uniformBuffer.UploadSingle(modelViewProjection);
+
         var result = swapchain.AcquireNextImage(imageAvailableSemaphore, out uint imageIndex);
 
         if (result == Result.ErrorOutOfDateKhr)

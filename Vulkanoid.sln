@@ -13,9 +13,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Generators", "cod
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Tests", "tests\Vulkanoid.Tests.csproj", "{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{456A214D-AA85-4302-BC6C-521AB8155BB5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_solution", "_solution", "{456A214D-AA85-4302-BC6C-521AB8155BB5}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
 		directory.build.props = directory.build.props
+		license = license
+		readme.md = readme.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Sample", "samples\Vulkanoid.Sample.csproj", "{55475EDC-A66E-4EB0-B585-81EF394F1D3E}"

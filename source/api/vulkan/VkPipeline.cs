@@ -7,5 +7,5 @@ public sealed partial class VkPipeline : IDisposable
 
     public PipelineLayout Layout { get; }
 
-    public void Dispose() => throw new NotImplementedException();
+    public void Dispose() => device.DestroyPipeline(handle);
 }
