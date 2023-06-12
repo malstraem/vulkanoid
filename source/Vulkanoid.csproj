@@ -24,6 +24,6 @@
     
     <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
 
-    <ProjectReference Include="$(SolutionDir)codegen\Vulkanoid.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\codegen\Vulkanoid.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

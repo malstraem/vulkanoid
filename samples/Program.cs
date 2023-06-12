@@ -12,7 +12,6 @@ using Silk.NET.Windowing;
 using Vulkanoid;
 using Vulkanoid.Vulkan;
 using Vulkanoid.Sample;
-using SharpGLTF.Transforms;
 
 var options = WindowOptions.DefaultVulkan;
 options.Size = new(1280, 720);
@@ -85,7 +84,7 @@ class VulkanRender
         commandPool = device.CreateCommandPool();
 
         descriptorSetLayout = device.CreateDescriptorSetLayout();
-
+        
         var extent = new Extent2D((uint)window.FramebufferSize.X, (uint)window.FramebufferSize.Y);
 
         unsafe

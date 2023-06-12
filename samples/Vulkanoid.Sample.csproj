@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <Platforms>x64</Platforms>
     <OutputType>exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
 
@@ -8,8 +9,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <ShadersPath>shaders</ShadersPath>
-
-    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,7 +17,7 @@
     <PackageReference Include="Silk.NET.GLFW" Version="2.17.1" />
     <PackageReference Include="Silk.NET.Input" Version="2.17.1" />
 
-    <ProjectReference Include="$(SolutionDir)source\Vulkanoid.csproj" />
+    <ProjectReference Include="..\source\Vulkanoid.csproj" />
   </ItemGroup>
 
   <ItemGroup>
