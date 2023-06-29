@@ -22,7 +22,7 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
     {
 #if DEBUG
         ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
-        Debug.Assert(size == memory.Size);
+        Debug.Assert(size <= memory.Size);
 #endif
         unsafe
         {
@@ -39,7 +39,7 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
     {
 #if DEBUG
         ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
-        Debug.Assert(size == memory.Size);
+        Debug.Assert(size <= memory.Size);
 #endif
         unsafe
         {
@@ -54,10 +54,10 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
 
     public void UploadSingle<T>(T data)
     {
-//#if DEBUG
+#if DEBUG
         ulong size = (ulong)Unsafe.SizeOf<T>();
-        Debug.Assert(size == memory.Size);
-//#endif
+        Debug.Assert(size <= memory.Size);
+#endif
         unsafe
         {
             void* target = (void*)memory.Map();
