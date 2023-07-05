@@ -15,7 +15,7 @@ public sealed partial class VkDevice : GraphicsDevice
 
             var poolInfo = new DescriptorPoolCreateInfo(poolSizeCount: 2, pPoolSizes: poolSizesPtr, maxSets: 1u);
 
-            vk.CreateDescriptorPool(handle, poolInfo, null, out var poolHandle);
+            vk.CreateDescriptorPool(handle, poolInfo, null, out var poolHandle).Check();
 
             return new VkDescriptorPool(poolHandle, this);
         }
@@ -38,7 +38,7 @@ public sealed partial class VkDevice : GraphicsDevice
 
             var createInfo = new DescriptorSetLayoutCreateInfo(bindingCount: 2u, pBindings: bindingsPtr);
 
-            vk.CreateDescriptorSetLayout(handle, in createInfo, null, out var setLayoutHandle);
+            vk.CreateDescriptorSetLayout(handle, in createInfo, null, out var setLayoutHandle).Check();
             
             return new VkDescriptorSetLayout(setLayoutHandle, this);
         }

@@ -170,7 +170,7 @@ class VulkanRender
 
         device.WaitIdle();
 
-        uniformBuffer.UploadSingle(modelViewProjection);
+        uniformBuffer.Upload(modelViewProjection);
 
         window.FramebufferResize += OnFramebufferResize;
         window.Render += OnRender;
@@ -224,7 +224,7 @@ class VulkanRender
     {
         modelViewProjection.Model *= Matrix4X4.CreateRotationZ((float)time);
         modelViewProjection.Projection = Matrix4X4.CreatePerspectiveFieldOfView(Scalar.DegreesToRadians(45f), swapchain.Extent.Width / (float)swapchain.Extent.Height, 0.001f, 10000f);
-        uniformBuffer.UploadSingle(modelViewProjection);
+        uniformBuffer.Upload(modelViewProjection);
 
         var result = swapchain.AcquireNextImage(imageAvailableSemaphore, out uint imageIndex);
 

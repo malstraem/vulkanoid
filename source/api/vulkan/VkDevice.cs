@@ -28,7 +28,7 @@ public sealed partial class VkDevice : GraphicsDevice
 
         graphicsQueue = GetQueue(physicalDevice.queueFamilies.Graphics);
 
-        vk.TryGetDeviceExtension(instance, handle, out swapchainExt);
+        _ = vk.TryGetDeviceExtension(instance, handle, out swapchainExt);
     }
 
     ~VkDevice()

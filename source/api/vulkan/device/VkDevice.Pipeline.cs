@@ -99,7 +99,7 @@ public sealed partial class VkDevice : GraphicsDevice
                     setLayoutCount: 1u,
                     pSetLayouts: &descriptorSetLayoutHandle);
 
-                vk.CreatePipelineLayout(handle, pipelineLayoutInfo, null, out var layoutHandle);
+                vk.CreatePipelineLayout(handle, pipelineLayoutInfo, null, out var layoutHandle).Check();
 
                 var depthStencil = new PipelineDepthStencilStateCreateInfo(
                     depthTestEnable: true,

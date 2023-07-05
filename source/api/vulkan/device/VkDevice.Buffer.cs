@@ -17,12 +17,10 @@ public sealed partial class VkDevice : GraphicsDevice
             var info = new BufferCreateInfo(flags: create, usage: usage | BufferUsageFlags.TransferDstBit, sharingMode: mode,
                                             size: (ulong)(Unsafe.SizeOf<T>() * elementCount));
 
-            vk.CreateBuffer(handle, in info, null, out var bufferHandle);
+            vk.CreateBuffer(handle, in info, null, out var bufferHandle).Check();
             vk.GetBufferMemoryRequirements(handle, bufferHandle, out var memoryRequirements);
 
-            var memory = AllocateMemory(memoryRequirements, properties);
-
-            return new VkBuffer(bufferHandle, memory, this);
+            return new VkBuffer(bufferHandle, AllocateMemory(memoryRequirements, properties), this);
         }
     }
 

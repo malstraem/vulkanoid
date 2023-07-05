@@ -5,7 +5,7 @@ namespace Vulkanoid.Vulkan;
 public sealed partial class VkDevice : GraphicsDevice
 {
     [Obsolete("To do - add flexibility")]
-    internal VkSwapchain CreateSwapchain(in SwapchainCreateInfoKHR createInfo, SampleCountFlags sampleCount, uint presentFamily, VkRenderPass renderPass)
+    private VkSwapchain CreateSwapchain(in SwapchainCreateInfoKHR createInfo, SampleCountFlags sampleCount, uint presentFamily, VkRenderPass renderPass)
     {
         Image[] images;
         Extent3D extent = new(createInfo.ImageExtent.Width, createInfo.ImageExtent.Height, 1u);
@@ -13,13 +13,13 @@ public sealed partial class VkDevice : GraphicsDevice
 
         unsafe
         {
-            var result = swapchainExt.CreateSwapchain(handle, createInfo, null, out swapchainHandle);
+            swapchainExt.CreateSwapchain(handle, createInfo, null, out swapchainHandle).Check();
 
             uint imageCount = createInfo.MinImageCount;
-            swapchainExt.GetSwapchainImages(handle, swapchainHandle, ref imageCount, null);
+            swapchainExt.GetSwapchainImages(handle, swapchainHandle, ref imageCount, null).Check();
 
             images = new Image[createInfo.MinImageCount];
-            swapchainExt.GetSwapchainImages(handle, swapchainHandle, &imageCount, images);
+            swapchainExt.GetSwapchainImages(handle, swapchainHandle, &imageCount, images).Check();
         }
 
         var depthImage = CreateImage(extent, physicalDevice.DepthFormat, ImageTiling.Optimal,
@@ -59,8 +59,7 @@ public sealed partial class VkDevice : GraphicsDevice
     }
 
     [Obsolete("To do - add flexibility")]
-    public VkSwapchain CreateSwapchain(SurfaceKHR surfaceHandle, Extent2D extent,
-                                       Format format, SampleCountFlags sampleCount, VkRenderPass renderPass)
+    public VkSwapchain CreateSwapchain(SurfaceKHR surfaceHandle, Extent2D extent, Format format, SampleCountFlags sampleCount, VkRenderPass renderPass)
     {
         if (swapchainExt is null)
             throw new Exception($"Presentation requested but {KhrSwapchain.ExtensionName} is not supported");
@@ -93,7 +92,7 @@ public sealed partial class VkDevice : GraphicsDevice
 
         for (uint i = 0u; i < physicalDevice.queueFamilies.Count; i++)
         {
-            instance.surfaceExt.GetPhysicalDeviceSurfaceSupport(physicalDevice, i, surfaceHandle, out var presentSupported);
+            instance.surfaceExt.GetPhysicalDeviceSurfaceSupport(physicalDevice, i, surfaceHandle, out var presentSupported).Check();
 
             if (presentSupported && i != physicalDevice.queueFamilies.Graphics)
             {
@@ -140,19 +139,19 @@ public sealed partial class VkDevice : GraphicsDevice
         var surfaceExt = instance.surfaceExt;
 
         uint formatCount = 0u, presentModeCount = 0u;
-        surfaceExt.GetPhysicalDeviceSurfaceCapabilities(physicalDevice, surface, out var surfaceCapabilities);
+        surfaceExt.GetPhysicalDeviceSurfaceCapabilities(physicalDevice, surface, out var surfaceCapabilities).Check();
 
         unsafe
         {
-            surfaceExt.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, &formatCount, null);
+            surfaceExt.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, &formatCount, null).Check();
 
             Span<SurfaceFormatKHR> formats = stackalloc SurfaceFormatKHR[(int)formatCount];
-            surfaceExt.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, &formatCount, formats);
+            surfaceExt.GetPhysicalDeviceSurfaceFormats(physicalDevice, surface, &formatCount, formats).Check();
 
-            surfaceExt.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, &presentModeCount, null);
+            surfaceExt.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, &presentModeCount, null).Check();
 
             Span<PresentModeKHR> presentModes = stackalloc PresentModeKHR[(int)presentModeCount];
-            surfaceExt.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, &presentModeCount, presentModes);
+            surfaceExt.GetPhysicalDeviceSurfacePresentModes(physicalDevice, surface, &presentModeCount, presentModes).Check();
 
             return new(surfaceCapabilities, formats.ToArray(), presentModes.ToArray());
         }

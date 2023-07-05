@@ -6,7 +6,7 @@ public sealed partial class VkDevice : GraphicsDevice
     {
         unsafe
         {
-            vk.CreateFence(handle, info, null, out var fenceHandle);
+            vk.CreateFence(handle, info, null, out var fenceHandle).Check();
             return new VkFence(fenceHandle, this);
         }
     }
@@ -15,20 +15,14 @@ public sealed partial class VkDevice : GraphicsDevice
     {
         unsafe
         {
-            vk.CreateSemaphore(handle, info, null, out var semaphore);
+            vk.CreateSemaphore(handle, info, null, out var semaphore).Check();
             return new VkSemaphore(semaphore, this);
         }
     }
 
     public void WaitIdle() => vk.DeviceWaitIdle(handle);
 
-    internal void WaitForFence(in Fence fence, ulong timeout)
-    {
-        var result = vk.WaitForFences(handle, 1u, fence, true, timeout);
-    }
+    internal void WaitForFence(in Fence fence, ulong timeout) => vk.WaitForFences(handle, 1u, fence, true, timeout).Check();
 
-    internal void ResetFence(in Fence fence)
-    {
-        var result = vk.ResetFences(handle, 1u, fence);
-    }
+    internal void ResetFence(in Fence fence) => vk.ResetFences(handle, 1u, fence).Check();
 }

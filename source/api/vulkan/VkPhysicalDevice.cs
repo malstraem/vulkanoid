@@ -20,9 +20,11 @@ public sealed class VkPhysicalDevice
         {
             vk.GetPhysicalDeviceFormatProperties(handle, candidate, out var properties);
 
-            if (tiling == ImageTiling.Linear && (properties.LinearTilingFeatures & features) == features
-                || tiling == ImageTiling.Optimal && (properties.OptimalTilingFeatures & features) == features)
+            if ((tiling == ImageTiling.Linear && (properties.LinearTilingFeatures & features) == features)
+                 || (tiling == ImageTiling.Optimal && (properties.OptimalTilingFeatures & features) == features))
+            {
                 return candidate;
+            }
         }
         throw new Exception("Supported format not found");
     }
@@ -72,7 +74,7 @@ public sealed class VkPhysicalDevice
 
         for (int i = 0; i < memoryProperties.MemoryTypeCount; i++)
         {
-            if ((typeFilter & 1u << i) != 0 && (memoryProperties.MemoryTypes[i].PropertyFlags & properties) != 0)
+            if ((typeFilter & (1u << i)) != 0 && (memoryProperties.MemoryTypes[i].PropertyFlags & properties) != 0)
                 return (uint)i;
         }
 
@@ -84,8 +86,7 @@ public sealed class VkPhysicalDevice
         this.vk = vk;
         this.handle = handle;
 
-        DepthFormat = FindSupportedFormat(new[] { Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint },
-            ImageTiling.Optimal, FormatFeatureFlags.DepthStencilAttachmentBit);
+        DepthFormat = FindSupportedFormat(new[] { Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint }, ImageTiling.Optimal, FormatFeatureFlags.DepthStencilAttachmentBit);
 
         queueFamilies = FindQueueFamilies();
     }
@@ -114,7 +115,7 @@ public sealed class VkPhysicalDevice
                 ppEnabledExtensionNames: (byte**)SilkMarshal.StringArrayToPtr(extensions),
                 enabledExtensionCount: (uint)extensions.Length);
 
-            var result = vk.CreateDevice(handle, createInfo, null, out var deviceHandle);
+            vk.CreateDevice(handle, createInfo, null, out var deviceHandle).Check();
 
             return deviceHandle;
         }

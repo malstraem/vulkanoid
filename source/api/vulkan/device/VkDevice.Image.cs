@@ -8,7 +8,7 @@ public sealed partial class VkDevice : GraphicsDevice
     #region Image
     [Obsolete("To do - add flexibility")]
     public VkImage CreateImage(Extent3D extent, Format format, ImageTiling imageTiling, ImageUsageFlags imageUsage,
-        MemoryPropertyFlags properties, SampleCountFlags sampleCount = SampleCountFlags.Count1Bit, uint mipLevels = 1)
+                               MemoryPropertyFlags properties, SampleCountFlags sampleCount = SampleCountFlags.Count1Bit, uint mipLevels = 1)
     {
         unsafe
         {
@@ -24,8 +24,7 @@ public sealed partial class VkDevice : GraphicsDevice
                 sharingMode: SharingMode.Exclusive,
                 samples: sampleCount);
 
-            vk.CreateImage(handle, in imageInfo, null, out var imageHandle);
-
+            vk.CreateImage(handle, in imageInfo, null, out var imageHandle).Check();
             vk.GetImageMemoryRequirements(handle, imageHandle, out var memoryRequirements);
 
             return new VkImage(imageHandle, AllocateMemory(memoryRequirements, properties), this) { Format = format, MipLevels = mipLevels };
@@ -43,10 +42,11 @@ public sealed partial class VkDevice : GraphicsDevice
         Span<Rgba32> pixelData = new(new Rgba32[width * height]);
         rawImage.CopyPixelDataTo(pixelData);
 
-        var stagingBuffer = CreateBuffer<Rgba32>(BufferUsageFlags.TransferSrcBit, pixelData.Length);
+        var stagingBuffer = CreateBuffer<Rgba32>(BufferUsageFlags.TransferSrcBit, elementCount: pixelData.Length);
         stagingBuffer.Upload(pixelData);
 
-        var image = CreateImage(new Extent3D((uint)width, (uint)height, 1u), Format.R8G8B8A8Srgb, ImageTiling.Optimal,
+        var image = CreateImage(
+            new Extent3D((uint)width, (uint)height, 1u), Format.R8G8B8A8Srgb, ImageTiling.Optimal,
             ImageUsageFlags.TransferDstBit | ImageUsageFlags.TransferSrcBit | ImageUsageFlags.SampledBit,
             MemoryPropertyFlags.DeviceLocalBit, mipLevels: mipLevels);
 
@@ -71,10 +71,7 @@ public sealed partial class VkDevice : GraphicsDevice
                 image: image,
                 viewType: ImageViewType.Type2D,
                 format: format,
-                components: new ComponentMapping(ComponentSwizzle.Identity, 
-                                                ComponentSwizzle.Identity, 
-                                                ComponentSwizzle.Identity, 
-                                                ComponentSwizzle.Identity),
+                components: new ComponentMapping(ComponentSwizzle.Identity, ComponentSwizzle.Identity, ComponentSwizzle.Identity, ComponentSwizzle.Identity),
                 subresourceRange: new ImageSubresourceRange
                 {
                     AspectMask = aspectFlags,
@@ -84,7 +81,7 @@ public sealed partial class VkDevice : GraphicsDevice
                     LayerCount = 1
                 });
 
-            vk.CreateImageView(handle, createInfo, null, out var imageViewHandle);
+            vk.CreateImageView(handle, createInfo, null, out var imageViewHandle).Check();
 
             return new VkImageView(imageViewHandle, this);
         }
@@ -119,7 +116,7 @@ public sealed partial class VkDevice : GraphicsDevice
                 minLod: 0u,
                 maxLod: maxLod);
 
-            vk.CreateSampler(handle, in samplerInfo, null, out var samplerHandle);
+            vk.CreateSampler(handle, in samplerInfo, null, out var samplerHandle).Check();
 
             return new VkSampler(samplerHandle, this);
         }
@@ -145,7 +142,7 @@ public sealed partial class VkDevice : GraphicsDevice
                 height: extent.Height,
                 layers: 1u);
 
-            var result = vk.CreateFramebuffer(handle, framebufferInfo, null, out var framebufferHandle);
+            vk.CreateFramebuffer(handle, framebufferInfo, null, out var framebufferHandle).Check();
 
             return new VkFramebuffer(framebufferHandle, this);
         }

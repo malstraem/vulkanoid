@@ -89,7 +89,7 @@ public sealed partial class VkDevice : GraphicsDevice
                 dependencyCount: 1,
                 pDependencies: &dependency);
 
-            vk.CreateRenderPass(handle, renderPassInfo, null, out var renderPassHandle);
+            vk.CreateRenderPass(handle, renderPassInfo, null, out var renderPassHandle).Check();
 
             return new VkRenderPass(renderPassHandle, this);
         }

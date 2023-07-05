@@ -11,7 +11,7 @@ public sealed partial class VkDevice : GraphicsDevice
             fixed (byte* codePtr = code)
                 createInfo.PCode = (uint*)codePtr;
 
-            vk.CreateShaderModule(handle, &createInfo, null, out var moduleHandle);
+            vk.CreateShaderModule(handle, &createInfo, null, out var moduleHandle).Check();
 
             var shaderModule = new VkShaderModule(moduleHandle, this);
 

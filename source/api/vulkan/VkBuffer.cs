@@ -6,13 +6,12 @@ using Buffer = Silk.NET.Vulkan.Buffer;
 namespace Vulkanoid.Vulkan;
 
 [Handle<Buffer>]
-public partial class VkBuffer : DeviceBuffer, IDisposable
+public partial class VkBuffer : IBuffer, IDisposable
 {
     internal VkMemory memory;
 
     public VkBuffer(Buffer handle, VkMemory memory, VkDevice device) : this(handle, device)
     {
-        size = memory.Size;
         this.memory = memory;
 
         device.BindBufferMemory(handle, memory);
@@ -52,7 +51,7 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
         }
     }
 
-    public void UploadSingle<T>(T data)
+    public void Upload<T>(T data) where T : unmanaged
     {
 #if DEBUG
         ulong size = (ulong)Unsafe.SizeOf<T>();
@@ -70,7 +69,7 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
     {
         using var commandBuffer = commandPool.CreateCommandBuffer();
 
-        commandBuffer.OneTimeSubmit(x => x.CopyBuffer(handle, other, new BufferCopy(0ul, 0ul, size)));
+        commandBuffer.OneTimeSubmit(x => x.CopyBuffer(handle, other, new BufferCopy(0ul, 0ul, memory.Size)));
     }
 
     public void CopyToImage(Image image, VkCommandPool commandPool, uint width, uint height)
@@ -83,4 +82,6 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
     }
 
     public void Dispose() => throw new NotImplementedException();
+
+    public ulong Size => memory.Size;
 }

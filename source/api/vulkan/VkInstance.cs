@@ -47,7 +47,7 @@ public sealed class VkInstance
                                                                   messageType: messageType,
                                                                   pfnUserCallback: (PfnDebugUtilsMessengerCallbackEXT)DebugCallback);
 
-            debugExt.CreateDebugUtilsMessenger(handle, createInfo, null, out debugMessenger);
+            debugExt.CreateDebugUtilsMessenger(handle, createInfo, null, out debugMessenger).Check();
         }
     }
 
@@ -81,7 +81,7 @@ public sealed class VkInstance
             createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToPtr(new string[] { "VK_LAYER_KHRONOS_validation" });
             createInfo.EnabledLayerCount = 1u;
 #endif
-            var result = vk.CreateInstance(createInfo, null, out handle);
+            vk.CreateInstance(createInfo, null, out handle).Check();
         }
 
         vk.CurrentInstance = handle;

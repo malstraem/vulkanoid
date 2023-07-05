@@ -8,7 +8,7 @@ public sealed partial class VkDevice : GraphicsDevice
         {
             var info = new CommandPoolCreateInfo(queueFamilyIndex: 0u);
 
-            vk.CreateCommandPool(handle, info, null, out var poolHandle);
+            vk.CreateCommandPool(handle, info, null, out var poolHandle).Check();
 
             return new VkCommandPool(poolHandle, this);
         }
