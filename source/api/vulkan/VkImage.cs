@@ -1,4 +1,6 @@
-﻿namespace Vulkanoid.Vulkan;
+﻿using Filter = Silk.NET.Vulkan.Filter;
+
+namespace Vulkanoid.Vulkan;
 
 [Handle<Image>]
 public sealed partial class VkImage : IDisposable

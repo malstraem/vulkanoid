@@ -1,6 +1,8 @@
 using SixLabors.ImageSharp.PixelFormats;
 using RawImage = SixLabors.ImageSharp.Image;
 
+using Filter = Silk.NET.Vulkan.Filter;
+
 namespace Vulkanoid.Vulkan;
 
 public sealed partial class VkDevice : GraphicsDevice

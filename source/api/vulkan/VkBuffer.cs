@@ -20,15 +20,14 @@ public partial class VkBuffer : IBuffer, IDisposable
     public void Upload<T>(Span<T> data)
     {
 #if DEBUG
-        ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
-        Debug.Assert(size <= memory.Size);
+        Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
 #endif
         unsafe
         {
             void* target = (void*)memory.Map();
 
             fixed (T* dataPtr = data)
-                System.Buffer.MemoryCopy(dataPtr, target, size, size);
+                System.Buffer.MemoryCopy(dataPtr, target, memory.Size, memory.Size);
 
             memory.Unmap();
         }
@@ -37,15 +36,14 @@ public partial class VkBuffer : IBuffer, IDisposable
     public void Upload<T>(T[] data)
     {
 #if DEBUG
-        ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
-        Debug.Assert(size <= memory.Size);
+        Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
 #endif
         unsafe
         {
             void* target = (void*)memory.Map();
 
             fixed (T* dataPtr = data)
-                System.Buffer.MemoryCopy(dataPtr, target, size, size);
+                System.Buffer.MemoryCopy(dataPtr, target, memory.Size, memory.Size);
 
             memory.Unmap();
         }
@@ -54,8 +52,7 @@ public partial class VkBuffer : IBuffer, IDisposable
     public void Upload<T>(T data) where T : unmanaged
     {
 #if DEBUG
-        ulong size = (ulong)Unsafe.SizeOf<T>();
-        Debug.Assert(size <= memory.Size);
+        Debug.Assert((ulong)Unsafe.SizeOf<T>() <= memory.Size);
 #endif
         unsafe
         {

@@ -1,4 +1,5 @@
 ﻿using Buffer = Silk.NET.Vulkan.Buffer;
+using Filter = Silk.NET.Vulkan.Filter;
 
 namespace Vulkanoid.Vulkan;
 

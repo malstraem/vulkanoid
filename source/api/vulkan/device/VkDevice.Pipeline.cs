@@ -1,3 +1,6 @@
+using Viewport = Silk.NET.Vulkan.Viewport;
+using LogicOp = Silk.NET.Vulkan.LogicOp;
+
 namespace Vulkanoid.Vulkan;
 
 public sealed partial class VkDevice : GraphicsDevice
