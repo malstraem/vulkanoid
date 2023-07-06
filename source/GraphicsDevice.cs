@@ -1,11 +1,9 @@
-﻿using Silk.NET.Core.Contexts;
-
-using Vulkanoid.Vulkan;
+﻿using Vulkanoid.Vulkan;
 
 namespace Vulkanoid;
 
 public abstract class GraphicsDevice
 {
     [Obsolete("To do - true abstraction")]
-    public static VkDevice CreateVulkan(IVkSurface surface) => new(surface);
+    public static VkDevice CreateVulkan(Vk vk, string[] extensions) => new(vk, extensions);
 }

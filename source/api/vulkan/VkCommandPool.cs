@@ -11,7 +11,7 @@ public sealed partial class VkCommandPool : IDisposable
             var commandBufferHandle = device.AllocateCommandBuffer(allocateInfo);
 
             var beginInfo = new CommandBufferBeginInfo(flags: usage);
-            var result = device.vk.BeginCommandBuffer(commandBufferHandle, beginInfo);
+            device.vk.BeginCommandBuffer(commandBufferHandle, beginInfo).Check();
 
             return new VkCommandBuffer(commandBufferHandle, device, this);
         }

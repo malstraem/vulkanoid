@@ -1,9 +1,8 @@
-using Silk.NET.Core.Native;
 using Silk.NET.Vulkan.Extensions.KHR;
 
 namespace Vulkanoid.Vulkan;
 
-public record struct QueueFamilies(uint GraphicsIndex, uint? PresentIndex);
+public record struct QueueFamilies(uint Count, uint Graphics, uint Transfer);
 
 public record struct SwapchainSupport(SurfaceCapabilitiesKHR Capabilities, SurfaceFormatKHR[] Formats, PresentModeKHR[] PresentModes);
 
@@ -15,34 +14,59 @@ public sealed class VkPhysicalDevice
 
     internal readonly QueueFamilies queueFamilies;
 
-    internal readonly SwapchainSupport swapchainSupport;
-
-
     private Format FindSupportedFormat(Format[] candidates, ImageTiling tiling, FormatFeatureFlags features)
     {
         foreach (var candidate in candidates)
         {
             vk.GetPhysicalDeviceFormatProperties(handle, candidate, out var properties);
 
-            if (tiling == ImageTiling.Linear && (properties.LinearTilingFeatures & features) == features
-                || tiling == ImageTiling.Optimal && (properties.OptimalTilingFeatures & features) == features)
+            if ((tiling == ImageTiling.Linear && (properties.LinearTilingFeatures & features) == features)
+                 || (tiling == ImageTiling.Optimal && (properties.OptimalTilingFeatures & features) == features))
+            {
                 return candidate;
+            }
         }
         throw new Exception("Supported format not found");
     }
 
-    public VkPhysicalDevice(PhysicalDevice handle, QueueFamilies queueFamilies, SwapchainSupport swapchainSupport, Vk vk)
+    private QueueFamilies FindQueueFamilies()
     {
-        this.vk = vk;
-        this.handle = handle;
-        this.queueFamilies = queueFamilies;
-        this.swapchainSupport = swapchainSupport;
+        uint queueFamilyCount = 0;
+        QueueFamilies queueFamilies = default;
+        QueueFamilyProperties[] queueFamilyProperties;
 
-        DepthFormat = FindSupportedFormat(new[] { Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint },
-            ImageTiling.Optimal, FormatFeatureFlags.DepthStencilAttachmentBit);
+        unsafe
+        {
+            vk.GetPhysicalDeviceQueueFamilyProperties(handle, ref queueFamilyCount, null);
+
+            queueFamilyProperties = new QueueFamilyProperties[queueFamilyCount];
+            vk.GetPhysicalDeviceQueueFamilyProperties(handle, &queueFamilyCount, queueFamilyProperties);
+        }
+
+        queueFamilies.Count = queueFamilyCount;
+
+        for (uint i = 0u; i < queueFamilyCount; i++)
+        {
+            if (queueFamilyProperties[(int)i].QueueFlags.HasFlag(QueueFlags.GraphicsBit))
+            {
+                queueFamilies.Graphics = i;
+                queueFamilies.Transfer = i;
+                break;
+            }
+        }
+
+        for (uint i = 0u; i < queueFamilyCount; i++)
+        {
+            var flags = queueFamilyProperties[(int)i].QueueFlags;
+            if (flags.HasFlag(QueueFlags.TransferBit) && !flags.HasFlag(QueueFlags.GraphicsBit))
+            {
+                queueFamilies.Transfer = i;
+                break;
+            }
+        }
+
+        return queueFamilies;
     }
-
-    public static implicit operator PhysicalDevice(VkPhysicalDevice resource) => resource.handle;
 
     internal uint FindMemoryType(uint typeFilter, MemoryPropertyFlags properties)
     {
@@ -57,51 +81,43 @@ public sealed class VkPhysicalDevice
         throw new Exception("Suitable memory type not found");
     }
 
+    public VkPhysicalDevice(PhysicalDevice handle, Vk vk)
+    {
+        this.vk = vk;
+        this.handle = handle;
+
+        DepthFormat = FindSupportedFormat(new[] { Format.D32Sfloat, Format.D32SfloatS8Uint, Format.D24UnormS8Uint }, ImageTiling.Optimal, FormatFeatureFlags.DepthStencilAttachmentBit);
+
+        queueFamilies = FindQueueFamilies();
+    }
+
+    public static implicit operator PhysicalDevice(VkPhysicalDevice resource) => resource.handle;
+
     public Device CreateDevice()
     {
         float queuePriority = 1f;
-        uint uniqueQueueCount = queueFamilies.GraphicsIndex == queueFamilies.PresentIndex.Value ? 1u : 2u;
-
-        Span<DeviceQueueCreateInfo> queueCreateInfos;
 
         unsafe
         {
-            if (queueFamilies.PresentIndex is not null)
-            {
-                queueCreateInfos = stackalloc DeviceQueueCreateInfo[2];
+            var queueCreateInfos = stackalloc DeviceQueueCreateInfo[(int)queueFamilies.Count];
 
-                queueCreateInfos[1] = new DeviceQueueCreateInfo(
-                    queueFamilyIndex: queueFamilies.PresentIndex,
-                    queueCount: 1u,
-                    pQueuePriorities: &queuePriority);
-            }
-            else
-            {
-                queueCreateInfos = stackalloc DeviceQueueCreateInfo[1];
-            }
+            for (uint i = 0; i < queueFamilies.Count; i++)
+                queueCreateInfos[i] = new DeviceQueueCreateInfo(queueFamilyIndex: i, queueCount: 1u, pQueuePriorities: &queuePriority);
 
-            queueCreateInfos[0] = new DeviceQueueCreateInfo(
-                 queueFamilyIndex: queueFamilies.GraphicsIndex,
-                 queueCount: 1u,
-                 pQueuePriorities: &queuePriority);
-
-            var deviceFeatures = new PhysicalDeviceFeatures();
+            PhysicalDeviceFeatures deviceFeatures = default;
 
             string[] extensions = { KhrSwapchain.ExtensionName };
 
-            fixed (DeviceQueueCreateInfo* queueCreateInfoPtr = queueCreateInfos)
-            {
-                var createInfo = new DeviceCreateInfo(
-                    pQueueCreateInfos: queueCreateInfoPtr,
-                    queueCreateInfoCount: uniqueQueueCount,
-                    pEnabledFeatures: &deviceFeatures,
-                    ppEnabledExtensionNames: (byte**)SilkMarshal.StringArrayToPtr(extensions),
-                    enabledExtensionCount: (uint)extensions.Length);
+            var createInfo = new DeviceCreateInfo(
+                pQueueCreateInfos: queueCreateInfos,
+                queueCreateInfoCount: queueFamilies.Count,
+                pEnabledFeatures: &deviceFeatures,
+                ppEnabledExtensionNames: (byte**)SilkMarshal.StringArrayToPtr(extensions),
+                enabledExtensionCount: (uint)extensions.Length);
 
-                var result = vk.CreateDevice(handle, createInfo, null, out var deviceHandle);
+            vk.CreateDevice(handle, createInfo, null, out var deviceHandle).Check();
 
-                return deviceHandle;
-            }
+            return deviceHandle;
         }
     }
 
