@@ -13,7 +13,7 @@ public sealed partial class VkDevice : GraphicsDevice
         }
     }
 
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkPipeline CreatePipeline(Shader[] shaders, VkDescriptorSetLayout descriptorSetLayout, VkRenderPass renderPass, Extent2D extent)
     {
         unsafe
@@ -25,7 +25,7 @@ public sealed partial class VkDevice : GraphicsDevice
                 var shaderStageInfo = new PipelineShaderStageCreateInfo(
                     stage: shaders[i].Stage,
                     module: shaders[i].Module,
-                    pName: (byte*)SilkMarshal.StringToPtr(shaders[i].EntryPoint));
+                    pName: (byte*)StringToPtr(shaders[i].EntryPoint));
 
                 shaderStages[i] = shaderStageInfo;
             }
@@ -35,15 +35,15 @@ public sealed partial class VkDevice : GraphicsDevice
 
             fixed (VertexInputAttributeDescription* pAttributeDescriptions = attributeDescriptions)
             {
-                var vertexInputInfo = new PipelineVertexInputStateCreateInfo(
+                var vertexInputInfo = new PipelineVertexInputStateCreateInfo
+                (
                     vertexBindingDescriptionCount: 1u,
                     vertexAttributeDescriptionCount: (uint)attributeDescriptions.Length,
                     pVertexBindingDescriptions: &bindingDescription,
-                    pVertexAttributeDescriptions: pAttributeDescriptions);
+                    pVertexAttributeDescriptions: pAttributeDescriptions
+                );
 
-                var inputAssembly = new PipelineInputAssemblyStateCreateInfo(
-                    topology: PrimitiveTopology.TriangleList,
-                    primitiveRestartEnable: false);
+                var inputAssembly = new PipelineInputAssemblyStateCreateInfo(topology: PrimitiveTopology.TriangleList, primitiveRestartEnable: false);
 
                 var viewport = new Viewport()
                 {

@@ -2,6 +2,7 @@ namespace Vulkanoid.Vulkan;
 
 public sealed partial class VkDevice : GraphicsDevice
 {
+    [Obsolete("add flexibility")]
     public VkRenderPass CreateRenderPass(Format format, SampleCountFlags sampleCount)
     {
         var colorAttachment = new AttachmentDescription

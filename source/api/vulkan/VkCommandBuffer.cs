@@ -16,17 +16,17 @@ public sealed partial class VkCommandBuffer : IDisposable
 
         unsafe
         {
-            Submit(new SubmitInfo(sType: StructureType.SubmitInfo));
+            Submit(new SubmitInfo());
         }
     }
 
     public void Submit(SubmitInfo? info = null, Fence? fence = null)
     {
-        var result = device.vk.EndCommandBuffer(handle);
+        device.vk.EndCommandBuffer(handle).Check();
 
         unsafe
         {
-            var submitInfo = info ?? new SubmitInfo(sType: StructureType.SubmitInfo);
+            var submitInfo = info ?? new SubmitInfo();
 
             submitInfo.CommandBufferCount = 1;
 

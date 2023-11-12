@@ -2,7 +2,7 @@ namespace Vulkanoid.Vulkan;
 
 public sealed partial class VkDevice : GraphicsDevice
 {
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkDescriptorPool CreateDescriptorPool()
     {
         unsafe
@@ -21,7 +21,7 @@ public sealed partial class VkDevice : GraphicsDevice
         }
     }
 
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkDescriptorSetLayout CreateDescriptorSetLayout()
     {
         unsafe
@@ -30,20 +30,19 @@ public sealed partial class VkDevice : GraphicsDevice
 
             var samplerLayoutBinding = new DescriptorSetLayoutBinding(1u, DescriptorType.CombinedImageSampler, 1u, ShaderStageFlags.FragmentBit);
 
-            var bindingsPtr = stackalloc DescriptorSetLayoutBinding[2] 
-            { 
-                layoutBinding, 
-                samplerLayoutBinding 
+            var bindingsPtr = stackalloc DescriptorSetLayoutBinding[2]
+            {
+                layoutBinding,
+                samplerLayoutBinding
             };
 
             var createInfo = new DescriptorSetLayoutCreateInfo(bindingCount: 2u, pBindings: bindingsPtr);
 
             vk.CreateDescriptorSetLayout(handle, in createInfo, null, out var setLayoutHandle).Check();
-            
+
             return new VkDescriptorSetLayout(setLayoutHandle, this);
         }
     }
 
-    public void UpdateDescriptorSet(ReadOnlySpan<WriteDescriptorSet> writeDescriptorSets) 
-        => vk.UpdateDescriptorSets(handle, writeDescriptorSets, default);
+    public void UpdateDescriptorSet(ReadOnlySpan<WriteDescriptorSet> writeDescriptorSets) => vk.UpdateDescriptorSets(handle, writeDescriptorSets, default);
 }

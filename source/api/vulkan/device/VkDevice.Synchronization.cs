@@ -2,11 +2,17 @@ namespace Vulkanoid.Vulkan;
 
 public sealed partial class VkDevice : GraphicsDevice
 {
+    internal void WaitForFence(Fence fence, ulong timeout) => vk.WaitForFences(handle, 1u, fence, true, timeout).Check();
+
+    internal void ResetFence(Fence fence) => vk.ResetFences(handle, 1u, fence).Check();
+
+    public void WaitIdle() => vk.DeviceWaitIdle(handle);
+
     public VkFence CreateFence(in FenceCreateInfo info)
     {
         unsafe
         {
-            vk.CreateFence(handle, info, null, out var fenceHandle).Check();
+            vk.CreateFence(handle, in info, null, out var fenceHandle).Check();
             return new VkFence(fenceHandle, this);
         }
     }
@@ -15,14 +21,8 @@ public sealed partial class VkDevice : GraphicsDevice
     {
         unsafe
         {
-            vk.CreateSemaphore(handle, info, null, out var semaphore).Check();
+            vk.CreateSemaphore(handle, in info, null, out var semaphore).Check();
             return new VkSemaphore(semaphore, this);
         }
     }
-
-    public void WaitIdle() => vk.DeviceWaitIdle(handle);
-
-    internal void WaitForFence(in Fence fence, ulong timeout) => vk.WaitForFences(handle, 1u, fence, true, timeout).Check();
-
-    internal void ResetFence(in Fence fence) => vk.ResetFences(handle, 1u, fence).Check();
 }

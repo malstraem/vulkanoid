@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Text;
 
 using Microsoft.CodeAnalysis;
@@ -12,7 +12,7 @@ namespace Vulkanoid.Generators;
 /// </summary>
 public abstract class ApiGenerator : IIncrementalGenerator
 {
-    protected sealed record Target
+    private sealed record Target
     {
         public string Filename;
 
@@ -31,13 +31,13 @@ public abstract class ApiGenerator : IIncrementalGenerator
         }
     }
 
-    private const string HandleAttributeName = "HandleAttribute";
-    private const string HandleAttributeNamespace = "Vulkanoid";
-
 #pragma warning disable CS8618
     protected string deviceTypeName;
     protected string @namespace;
 #pragma warning restore CS8618
+
+    private const string HandleAttributeName = "HandleAttribute";
+    private const string HandleAttributeNamespace = "Vulkanoid";
 
     private void Generate(SourceProductionContext context, ImmutableArray<Target> targets)
     {
@@ -49,15 +49,6 @@ public abstract class ApiGenerator : IIncrementalGenerator
 
             string handleFieldAccessibility = symbol.IsSealed ? "private" : "protected";
             string constructorAccessibility = symbol.Constructors[0].IsImplicitlyDeclared ? "public" : "private";
-            string symbolAccesibility = symbol.DeclaredAccessibility switch
-            {
-                Accessibility.Private => "private",
-                Accessibility.Protected => "protected",
-                Accessibility.Internal => "internal",
-                Accessibility.ProtectedAndInternal => "protected internal",
-                Accessibility.Public => "public",
-                _ => string.Empty,
-            };
 
             string symbolDefinition = symbol.Name;
 
@@ -71,59 +62,57 @@ public abstract class ApiGenerator : IIncrementalGenerator
                 symbolDefinition += $"{symbol.TypeParameters.Last()}>";
             }
 
-            string source = "#pragma warning disable CS8618\r\n\r\n";
+            var builder = new StringBuilder("#pragma warning disable CS8618").AppendLine().AppendLine();
 
             foreach (string @using in target.Usings)
-                source += $"{@using}\r\n";
+                _ = builder.AppendLine(@using);
 
             if (target.Usings.Length > 0)
-                source += "\r\n";
+                _ = builder.AppendLine();
 
-            source += $@"namespace {@namespace};
+            _ = builder.AppendLine($@"namespace {@namespace};
 
-{symbolAccesibility} partial class {symbolDefinition}
+public partial class {symbolDefinition}
 {{
     {handleFieldAccessibility} readonly {handleTypeName} handle;
 
     {handleFieldAccessibility} readonly {deviceTypeName} device;
 
-    public static implicit operator {handleTypeName}({symbolDefinition} resource) => resource.handle;";
+    public static implicit operator {handleTypeName}({symbolDefinition} resource) => resource.handle;");
 
             if (symbol.BaseType is not null)
             {
                 foreach (var baseConstructor in symbol.BaseType.Constructors)
                 {
-                    source += $@"
-
-    {constructorAccessibility} {symbol.Name}({handleTypeName} handle, {deviceTypeName} device";
+                    _ = builder.Append($@"
+    {constructorAccessibility} {symbol.Name}({handleTypeName} handle, {deviceTypeName} device");
 
                     foreach (var parameter in baseConstructor.Parameters)
-                    {
-                        source += ',';
-                        source += $" {parameter.Type.Name} {parameter.Name}";
-                    }
+                        _ = builder.Append($", {parameter.Type.Name} {parameter.Name}");
 
-                    source += $")";
+                    _ = builder.Append(')');
 
                     if (baseConstructor.Parameters.Length > 0)
                     {
-                        source += " : base(";
+                        _ = builder.Append(" : base(");
 
                         foreach (var parameter in baseConstructor.Parameters.Take(symbol.TypeParameters.Length - 1))
-                            source += $"{parameter.Name}, ";
+                            _ = builder.Append($"{parameter.Name}, ");
 
-                        source += $"{baseConstructor.Parameters.Last().Name})";
+                        _ = builder.Append($"{baseConstructor.Parameters.Last().Name})");
                     }
 
-                    source += $@"
+                    _ = builder.AppendLine($@"
     {{
         this.handle = handle;
         this.device = device;
-    }}";
+    }}");
                 }
             }
 
-            source += "\r\n}";
+            _ = builder.Append('}');
+
+            string source = builder.ToString();
 
             context.AddSource($"{target.Filename}.gen.cs", SourceText.From(source, Encoding.UTF8));
         }
@@ -133,22 +122,22 @@ public abstract class ApiGenerator : IIncrementalGenerator
     {
         string @namespace = string.Empty;
 
-        var potentialNamespaceParent = syntax.Parent;
+        var potentialNamespaceSyntax = syntax.Parent;
 
-        while (potentialNamespaceParent is not null and not NamespaceDeclarationSyntax and not FileScopedNamespaceDeclarationSyntax)
-            potentialNamespaceParent = potentialNamespaceParent.Parent;
+        while (potentialNamespaceSyntax is not null and not NamespaceDeclarationSyntax and not FileScopedNamespaceDeclarationSyntax)
+            potentialNamespaceSyntax = potentialNamespaceSyntax.Parent;
 
-        if (potentialNamespaceParent is BaseNamespaceDeclarationSyntax namespaceParent)
+        if (potentialNamespaceSyntax is BaseNamespaceDeclarationSyntax namespaceSyntax)
         {
-            @namespace = namespaceParent.Name.ToString();
+            @namespace = namespaceSyntax.Name.ToString();
 
             while (true)
             {
-                if (namespaceParent.Parent is not NamespaceDeclarationSyntax parent)
+                if (namespaceSyntax.Parent is not NamespaceDeclarationSyntax parentNamespaceSyntax)
                     break;
 
-                @namespace = $"{namespaceParent.Name}.{@namespace}";
-                namespaceParent = parent;
+                @namespace = $"{namespaceSyntax.Name}.{@namespace}";
+                namespaceSyntax = parentNamespaceSyntax;
             }
         }
 
@@ -161,7 +150,7 @@ public abstract class ApiGenerator : IIncrementalGenerator
     private IncrementalValueProvider<ImmutableArray<Target>> GetProvider(IncrementalGeneratorInitializationContext context)
     {
         return context.SyntaxProvider.ForAttributeWithMetadataName(
-            $"{HandleAttributeNamespace}.{HandleAttributeName}`1", // <T> -> `1 in metadata name (why?)
+            $"{HandleAttributeNamespace}.{HandleAttributeName}`1", // <T> -> `1 in metadata name
             (node, _) => node is ClassDeclarationSyntax classSyntax && GetNamespace(classSyntax) == @namespace,
             (context, _) =>
             {
@@ -170,7 +159,9 @@ public abstract class ApiGenerator : IIncrementalGenerator
                 string filename = Path.GetFileNameWithoutExtension(classSyntax.SyntaxTree.FilePath);
                 string handleTypeName = GetHandleTypeName(context);
 
-                string[] usings = ((CompilationUnitSyntax)classSyntax.Ancestors().First(x => x is CompilationUnitSyntax)).Usings.Select(x => x.ToString()).ToArray();
+                string[] usings = ((CompilationUnitSyntax)classSyntax.Ancestors()
+                    .First(x => x is CompilationUnitSyntax))
+                        .Usings.Select(x => x.ToString()).ToArray();
 
                 return new Target(filename, handleTypeName, usings, (INamedTypeSymbol)context.TargetSymbol);
             }).Collect();

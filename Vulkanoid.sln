@@ -22,7 +22,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_solution", "_solution", "{
 		readme.md = readme.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Sample", "samples\Vulkanoid.Sample.csproj", "{55475EDC-A66E-4EB0-B585-81EF394F1D3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Sample.Vulkan", "samples\vulkan\Vulkanoid.Sample.Vulkan.csproj", "{1E8414BA-F975-4730-8C42-D125DF939DBF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vulkanoid.Sample.DirectX", "samples\directx\Vulkanoid.Sample.DirectX.csproj", "{9BF46A39-F2FE-4A91-BAEF-50EABB981698}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,17 +44,22 @@ Global
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Debug|x64.Build.0 = Debug|x64
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Release|x64.ActiveCfg = Release|x64
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9}.Release|x64.Build.0 = Release|x64
-		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Debug|x64.ActiveCfg = Debug|x64
-		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Debug|x64.Build.0 = Debug|x64
-		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Release|x64.ActiveCfg = Release|x64
-		{55475EDC-A66E-4EB0-B585-81EF394F1D3E}.Release|x64.Build.0 = Release|x64
+		{1E8414BA-F975-4730-8C42-D125DF939DBF}.Debug|x64.ActiveCfg = Debug|x64
+		{1E8414BA-F975-4730-8C42-D125DF939DBF}.Debug|x64.Build.0 = Debug|x64
+		{1E8414BA-F975-4730-8C42-D125DF939DBF}.Release|x64.ActiveCfg = Release|x64
+		{1E8414BA-F975-4730-8C42-D125DF939DBF}.Release|x64.Build.0 = Release|x64
+		{9BF46A39-F2FE-4A91-BAEF-50EABB981698}.Debug|x64.ActiveCfg = Debug|x64
+		{9BF46A39-F2FE-4A91-BAEF-50EABB981698}.Debug|x64.Build.0 = Debug|x64
+		{9BF46A39-F2FE-4A91-BAEF-50EABB981698}.Release|x64.ActiveCfg = Release|x64
+		{9BF46A39-F2FE-4A91-BAEF-50EABB981698}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9A96C0A1-9C68-467B-9DFC-FA578D7B3CD9} = {76E43C1D-4637-48AE-BF21-1903DC9AF373}
-		{55475EDC-A66E-4EB0-B585-81EF394F1D3E} = {BC73F324-2DD7-4A0A-997A-AEA856CC2D21}
+		{1E8414BA-F975-4730-8C42-D125DF939DBF} = {BC73F324-2DD7-4A0A-997A-AEA856CC2D21}
+		{9BF46A39-F2FE-4A91-BAEF-50EABB981698} = {BC73F324-2DD7-4A0A-997A-AEA856CC2D21}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {69E82546-BB1D-4D20-962E-CE7DA52FD915}

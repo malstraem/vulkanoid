@@ -3,7 +3,7 @@
 [Handle<DescriptorPool>]
 public sealed partial class VkDescriptorPool : IDisposable
 {
-    [Obsolete("Todo - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkDescriptorSet CreateDescriptorSet<T>(
         VkDescriptorSetLayout descriptorSetLayout,
         VkBuffer uniformBuffer,

@@ -4,7 +4,7 @@ namespace Vulkanoid.Vulkan;
 
 public sealed partial class VkDevice : GraphicsDevice
 {
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     private VkSwapchain CreateSwapchain(in SwapchainCreateInfoKHR createInfo, SampleCountFlags sampleCount, uint presentFamily, VkRenderPass renderPass)
     {
         Image[] images;
@@ -58,7 +58,7 @@ public sealed partial class VkDevice : GraphicsDevice
         }
     }
 
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkSwapchain CreateSwapchain(SurfaceKHR surfaceHandle, Extent2D extent, Format format, SampleCountFlags sampleCount, VkRenderPass renderPass)
     {
         if (swapchainExt is null)

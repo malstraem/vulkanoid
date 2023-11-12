@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using Buffer = Silk.NET.Vulkan.Buffer;
@@ -19,9 +19,8 @@ public partial class VkBuffer : IBuffer, IDisposable
 
     public void Upload<T>(Span<T> data)
     {
-#if DEBUG
         Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
-#endif
+
         unsafe
         {
             void* target = (void*)memory.Map();
@@ -35,9 +34,8 @@ public partial class VkBuffer : IBuffer, IDisposable
 
     public void Upload<T>(T[] data)
     {
-#if DEBUG
         Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
-#endif
+
         unsafe
         {
             void* target = (void*)memory.Map();
@@ -51,9 +49,9 @@ public partial class VkBuffer : IBuffer, IDisposable
 
     public void Upload<T>(T data) where T : unmanaged
     {
-#if DEBUG
+
         Debug.Assert((ulong)Unsafe.SizeOf<T>() <= memory.Size);
-#endif
+
         unsafe
         {
             void* target = (void*)memory.Map();

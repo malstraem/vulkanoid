@@ -1,6 +1,6 @@
 ﻿namespace Vulkanoid.DirectX;
 
-public class D3D12Device
+public partial class D12Image
 {
 
 }

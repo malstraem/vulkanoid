@@ -8,7 +8,7 @@ namespace Vulkanoid.Vulkan;
 public sealed partial class VkDevice : GraphicsDevice
 {
     #region Image
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkImage CreateImage(Extent3D extent, Format format, ImageTiling imageTiling, ImageUsageFlags imageUsage,
                                MemoryPropertyFlags properties, SampleCountFlags sampleCount = SampleCountFlags.Count1Bit, uint mipLevels = 1)
     {
@@ -64,7 +64,7 @@ public sealed partial class VkDevice : GraphicsDevice
     #endregion
 
     #region ImageView
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkImageView CreateImageView(Image image, Format format, uint mipLevels, ImageAspectFlags aspectFlags = ImageAspectFlags.ColorBit)
     {
         unsafe
@@ -89,12 +89,12 @@ public sealed partial class VkDevice : GraphicsDevice
         }
     }
 
-    public VkImageView CreateImageView(VkImage image, ImageAspectFlags aspectFlags = ImageAspectFlags.ColorBit) 
+    public VkImageView CreateImageView(VkImage image, ImageAspectFlags aspectFlags = ImageAspectFlags.ColorBit)
         => CreateImageView(image, image.Format, image.MipLevels, aspectFlags);
     #endregion
 
     #region Sampler & Framebuffer
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkSampler CreateSampler(uint maxLod)
     {
         unsafe
@@ -124,7 +124,7 @@ public sealed partial class VkDevice : GraphicsDevice
         }
     }
 
-    [Obsolete("To do - add flexibility")]
+    [Obsolete("add flexibility")]
     public VkFramebuffer CreateFramebuffer(VkImageView imageView, VkImageView depthImageView, VkImageView colorImageView,
                                            VkRenderPass renderPass, Extent2D extent)
     {

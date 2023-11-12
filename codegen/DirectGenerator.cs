@@ -9,7 +9,7 @@ public class DirectGenerator : ApiGenerator
 
     public DirectGenerator()
     {
-        deviceTypeName = "D3D12Device";
+        deviceTypeName = "D12Device";
         @namespace = "Vulkanoid.DirectX";
     }
 }

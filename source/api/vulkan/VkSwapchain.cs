@@ -12,7 +12,7 @@ public sealed partial class VkSwapchain : IDisposable
 
     //private readonly SwapchainCreateInfoKHR info;
 
-    public VkSwapchain(SwapchainKHR handle, /*in SwapchainCreateInfoKHR info,*/ VkDevice device, VkQueue presentQueue, KhrSwapchain swapchainExt) 
+    public VkSwapchain(SwapchainKHR handle, /*in SwapchainCreateInfoKHR info,*/ VkDevice device, VkQueue presentQueue, KhrSwapchain swapchainExt)
         : this(handle, device)
     {
         //this.info = info;
