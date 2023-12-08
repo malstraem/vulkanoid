@@ -1,5 +1,17 @@
 <Project>
   <PropertyGroup>
+    <Platforms>x64</Platforms>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <IsPackable>false</IsPackable>
+
     <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>
   </PropertyGroup>
 </Project>

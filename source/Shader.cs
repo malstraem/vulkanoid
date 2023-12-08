@@ -2,7 +2,7 @@
 
 namespace Vulkanoid;
 
-[Obsolete("To do - true abstraction")]
+[Obsolete("add true abstraction")]
 public class Shader
 {
     public VkShaderModule Module { get; init; }

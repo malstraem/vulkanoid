@@ -1,4 +1,4 @@
-﻿namespace Vulkanoid.Vulkan;
+namespace Vulkanoid.Vulkan;
 
 [Handle<Fence>]
 public sealed partial class VkFence : IDisposable

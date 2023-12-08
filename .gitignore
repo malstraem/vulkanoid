@@ -1,3 +1,7 @@
-﻿.vs/
+.vs/
+.idea/
 
 artifacts/
+
+[Bb]in/
+[Oo]bj/

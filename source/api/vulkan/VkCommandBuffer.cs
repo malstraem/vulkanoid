@@ -1,4 +1,5 @@
 ﻿using Buffer = Silk.NET.Vulkan.Buffer;
+using Filter = Silk.NET.Vulkan.Filter;
 
 namespace Vulkanoid.Vulkan;
 
@@ -13,26 +14,29 @@ public sealed partial class VkCommandBuffer : IDisposable
     {
         action(this);
 
-        unsafe { Submit(new SubmitInfo(sType: StructureType.SubmitInfo)); }
+        unsafe
+        {
+            Submit(new SubmitInfo());
+        }
     }
-      
+
     public void Submit(SubmitInfo? info = null, Fence? fence = null)
     {
-        var result = device.vk.EndCommandBuffer(handle);
+        device.vk.EndCommandBuffer(handle).Check();
 
         unsafe
         {
-            var submitInfo = info ?? new SubmitInfo(sType: StructureType.SubmitInfo);
+            var submitInfo = info ?? new SubmitInfo();
 
             submitInfo.CommandBufferCount = 1;
 
             fixed (CommandBuffer* handlePtr = &handle)
                 submitInfo.PCommandBuffers = handlePtr;
 
-            device.GraphicsQueue.Submit(submitInfo);
+            device.graphicsQueue.Submit(submitInfo);
         }
 
-        device.GraphicsQueue.WaitIdle();
+        device.graphicsQueue.WaitIdle();
     }
 
     public VkCommandBuffer BeginRenderPass(RenderPassBeginInfo info)

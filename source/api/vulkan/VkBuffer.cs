@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 using Buffer = Silk.NET.Vulkan.Buffer;
@@ -6,63 +6,56 @@ using Buffer = Silk.NET.Vulkan.Buffer;
 namespace Vulkanoid.Vulkan;
 
 [Handle<Buffer>]
-public partial class VkBuffer : DeviceBuffer, IDisposable
+public partial class VkBuffer : IBuffer, IDisposable
 {
     internal VkMemory memory;
 
     public VkBuffer(Buffer handle, VkMemory memory, VkDevice device) : this(handle, device)
     {
-        device.BindBufferMemory(handle, memory);
-
         this.memory = memory;
+
+        device.BindBufferMemory(handle, memory);
     }
 
-    public void Upload<T>(Span<T> data)
+    public void Upload<T>(Span<T> data) where T : unmanaged
     {
-#if DEBUG
-        ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
-        Debug.Assert(size == memory.Size);
-#endif
+        Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
+
         unsafe
         {
             void* target = (void*)memory.Map();
 
             fixed (T* dataPtr = data)
-                System.Buffer.MemoryCopy(dataPtr, target, size, size);
+                System.Buffer.MemoryCopy(dataPtr, target, memory.Size, memory.Size);
 
             memory.Unmap();
         }
     }
 
-    public void Upload<T>(T[] data)
+    public void Upload<T>(T[] data) where T : unmanaged
     {
-#if DEBUG
-        ulong size = (ulong)(Unsafe.SizeOf<T>() * data.Length);
-        Debug.Assert(size == memory.Size);
-#endif
+        Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
+
         unsafe
         {
             void* target = (void*)memory.Map();
 
             fixed (T* dataPtr = data)
-                System.Buffer.MemoryCopy(dataPtr, target, size, size);
+                System.Buffer.MemoryCopy(dataPtr, target, memory.Size, memory.Size);
 
             memory.Unmap();
         }
     }
 
-    public void UploadSingle<T>(T data)
+    public void Upload<T>(T data) where T : unmanaged
     {
-#if DEBUG
-        ulong size = (ulong)Unsafe.SizeOf<T>();
-        Debug.Assert(size == memory.Size);
-#endif
+
+        Debug.Assert((ulong)Unsafe.SizeOf<T>() <= memory.Size);
+
         unsafe
         {
             void* target = (void*)memory.Map();
-
             Unsafe.Copy(target, ref data);
-
             memory.Unmap();
         }
     }
@@ -71,7 +64,7 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
     {
         using var commandBuffer = commandPool.CreateCommandBuffer();
 
-        commandBuffer.OneTimeSubmit(x => x.CopyBuffer(handle, other, new BufferCopy(0ul, 0ul, size)));
+        commandBuffer.OneTimeSubmit(x => x.CopyBuffer(handle, other, new BufferCopy(0ul, 0ul, memory.Size)));
     }
 
     public void CopyToImage(Image image, VkCommandPool commandPool, uint width, uint height)
@@ -84,4 +77,6 @@ public partial class VkBuffer : DeviceBuffer, IDisposable
     }
 
     public void Dispose() => throw new NotImplementedException();
+
+    public ulong Size => memory.Size;
 }

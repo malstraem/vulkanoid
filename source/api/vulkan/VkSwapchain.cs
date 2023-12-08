@@ -10,12 +10,12 @@ public sealed partial class VkSwapchain : IDisposable
 
     private readonly VkQueue presentQueue;
 
-    public VkSwapchain(SwapchainKHR handle, Extent2D extent, VkFramebuffer[] framebuffers, VkQueue presentQueue, KhrSwapchain swapchainExt, VkDevice device) 
+    //private readonly SwapchainCreateInfoKHR info;
+
+    public VkSwapchain(SwapchainKHR handle, /*in SwapchainCreateInfoKHR info,*/ VkDevice device, VkQueue presentQueue, KhrSwapchain swapchainExt)
         : this(handle, device)
     {
-        Extent = extent;
-        Framebuffers = framebuffers;
-        
+        //this.info = info;
         this.presentQueue = presentQueue;
         this.swapchainExt = swapchainExt;
     }
@@ -33,7 +33,7 @@ public sealed partial class VkSwapchain : IDisposable
                     pSwapchains: handlePtr,
                     pImageIndices: &imageIndex);
 
-                return swapchainExt.QueuePresent(presentQueue, &presentInfo);
+                return swapchainExt.QueuePresent(presentQueue, in presentInfo);
             }
         }
     }
@@ -48,9 +48,9 @@ public sealed partial class VkSwapchain : IDisposable
         }
     }
 
-    public Extent2D Extent { get; }
+    public required Extent2D Extent { get; init; }
 
-    public VkFramebuffer[] Framebuffers { get; }
+    public required VkFramebuffer[] Framebuffers { get; init; }
 
-    public void Dispose() => throw new NotImplementedException();
+    public void Dispose() => device.DestroySwapchain(handle);
 }
