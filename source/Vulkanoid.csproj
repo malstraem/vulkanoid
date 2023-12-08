@@ -1,27 +1,19 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Platforms>x64</Platforms>
-    <TargetFrameworks>net8.0</TargetFrameworks>
-
-    <LangVersion>latest</LangVersion>
-
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Silk.NET.Direct3D.Compilers" Version="2.18.0" />
-    <PackageReference Include="Silk.NET.Maths" Version="2.18.0" />
+    <PackageReference Include="Silk.NET.Direct3D.Compilers" Version="2.19.0" />
+    <PackageReference Include="Silk.NET.Maths" Version="2.19.0" />
 
-    <PackageReference Include="Silk.NET.Vulkan" Version="2.18.0" />
-    <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.18.0" />
-    <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.18.0" />
+    <PackageReference Include="Silk.NET.Vulkan" Version="2.19.0" />
+    <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.19.0" />
+    <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.19.0" />
 
-    <PackageReference Include="Silk.NET.Direct3D12" Version="2.18.0" />
+    <PackageReference Include="Silk.NET.Direct3D12" Version="2.19.0" />
 
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.0.2" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.0" />
 
     <ProjectReference Include="..\codegen\Vulkanoid.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

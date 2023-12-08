@@ -17,7 +17,7 @@ public partial class VkBuffer : IBuffer, IDisposable
         device.BindBufferMemory(handle, memory);
     }
 
-    public void Upload<T>(Span<T> data)
+    public void Upload<T>(Span<T> data) where T : unmanaged
     {
         Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
 
@@ -32,7 +32,7 @@ public partial class VkBuffer : IBuffer, IDisposable
         }
     }
 
-    public void Upload<T>(T[] data)
+    public void Upload<T>(T[] data) where T : unmanaged
     {
         Debug.Assert((ulong)(Unsafe.SizeOf<T>() * data.Length) <= memory.Size);
 

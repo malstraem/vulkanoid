@@ -1,12 +1,6 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Platforms>x64</Platforms>
     <OutputType>exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <ShadersPath>shaders</ShadersPath>
   </PropertyGroup>
@@ -14,8 +8,8 @@
   <ItemGroup>
     <PackageReference Include="SharpGLTF.Core" Version="1.0.0-alpha0030" />
 
-    <PackageReference Include="Silk.NET.GLFW" Version="2.18.0" />
-    <PackageReference Include="Silk.NET.Input" Version="2.18.0" />
+    <PackageReference Include="Silk.NET.GLFW" Version="2.19.0" />
+    <PackageReference Include="Silk.NET.Input" Version="2.19.0" />
 
     <ProjectReference Include="..\..\source\Vulkanoid.csproj" />
   </ItemGroup>
